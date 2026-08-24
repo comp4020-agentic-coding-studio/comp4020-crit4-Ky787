@@ -110,8 +110,15 @@ label {
   align-items: center;
   gap: 0.4rem;
   overflow-x: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   padding-bottom: 2px;
+  /* Fades the right edge so a clipped chip reads as "there is more this way"
+     rather than as a layout bug. */
+  mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+}
+
+.repertoire::-webkit-scrollbar {
+  display: none;
 }
 
 .repertoire__list {
@@ -171,6 +178,26 @@ label {
 
 .chip--file {
   border-style: dashed;
+}
+
+/* Reachable by keyboard, invisible on screen. display:none would drop it out
+   of the tab order along with the only non-mouse way to open a file. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.chip--file:focus-within {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  color: var(--text);
 }
 
 .chip strong {

@@ -75,7 +75,13 @@ export class Transport {
     return this.loaded && !this.seq.paused;
   }
 
-  /** Score seconds. Smoothed, so it is the one to draw with. */
+  /**
+   * Score seconds. Smoothed, so it is the one to draw with.
+   *
+   * Reading it advances the smoothing filter, so read it once per frame and
+   * pass the value around — calling it three times in one frame triples the
+   * filter's rate and quietly changes how it behaves.
+   */
   get time(): number {
     return this.loaded ? this.seq.currentHighResolutionTime : 0;
   }
@@ -89,9 +95,13 @@ export class Transport {
     return this.seq.currentTempo;
   }
 
-  /** The tempo a listener would name here — what the conductor is measured against. */
-  get localTempo(): number {
-    return this.score ? referenceTempo(this.score.midi, this.time) : 120;
+  /**
+   * The tempo a listener would name at `seconds` — what the conductor is
+   * measured against. Takes the time rather than reading the clock, so a caller
+   * that already has this frame's time does not advance the filter again.
+   */
+  localTempoAt(seconds: number): number {
+    return this.score ? referenceTempo(this.score.midi, seconds) : 120;
   }
 
   get rate(): number {

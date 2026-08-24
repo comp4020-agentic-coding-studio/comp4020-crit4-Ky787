@@ -81,6 +81,12 @@ export class Panel {
     input.dispatchEvent(new Event("input"));
   }
 
+  /** Push every current value through its `apply`, so the engine agrees with
+   *  what the panel is showing. */
+  applyAll(): void {
+    for (const setting of this.settings) setting.apply(this.read(setting.id));
+  }
+
   resetAll(): void {
     for (const [id, value] of this.defaults) this.set(id, value);
   }

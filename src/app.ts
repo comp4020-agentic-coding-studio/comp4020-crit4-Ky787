@@ -53,6 +53,7 @@ export class App {
   private readonly playButton = need<HTMLButtonElement>("play");
   private readonly recordButton = need<HTMLButtonElement>("record");
   private readonly takeButton = need<HTMLButtonElement>("play-take");
+  private readonly recordLabel = need<HTMLElement>("record-label");
   private readonly modePlay = need<HTMLButtonElement>("mode-play");
   private readonly modeConduct = need<HTMLButtonElement>("mode-conduct");
   private readonly conductHud = need<HTMLElement>("conduct-hud");
@@ -86,6 +87,18 @@ export class App {
   private manualRate = 1;
   private lastStatus = "";
   private statusTimer = 0;
+  /** This frame's score time, so nothing reads the smoothed clock twice. */
+  private frameTime = 0;
+  private lastRatePush = 0;
+
+  /** For the browser checks and the console: see main.ts. */
+  get audio(): AudioEngine {
+    return this.engine;
+  }
+
+  get score(): Transport | undefined {
+    return this.transport;
+  }
 
   // --- boot ---------------------------------------------------------------
 
@@ -314,14 +327,14 @@ export class App {
     if (!this.recorder.isRecording) {
       this.recorder.start();
       this.recordButton.classList.add("is-recording");
-      this.recordButton.lastChild!.textContent = " Stop";
+      this.recordLabel.textContent = "Stop";
       this.setStatus("Recording. Play — pedal and touch are captured too.");
       return;
     }
 
     const take = this.recorder.stop();
     this.recordButton.classList.remove("is-recording");
-    this.recordButton.lastChild!.textContent = " Record";
+    this.recordLabel.textContent = "Record";
     if (!take) {
       this.setStatus("Nothing was played, so there is no take to keep.");
       return;
@@ -379,6 +392,11 @@ export class App {
       this.refreshPlayButton();
     } else {
       this.endConducting();
+      // Leave the music where the hand left it, and hand the slider the same
+      // number, so the two controls never disagree about the current tempo.
+      this.manualRate = Number(this.conductorState.multiplier.toFixed(2));
+      this.panel?.reflect("tempo", this.manualRate);
+      this.engine.setDynamic(this.dynamicsSetting);
       this.setStatus("");
     }
   }
@@ -399,7 +417,7 @@ export class App {
       this.conductorState = applyBeat(
         this.conductorState,
         beat,
-        this.transport.localTempo,
+        this.transport.localTempoAt(this.frameTime),
         point.t,
       );
       this.beatFlash = 1;
@@ -454,9 +472,11 @@ export class App {
     this.lastFrame = now;
     this.beatFlash = Math.max(0, this.beatFlash - dt * 4);
 
+    // Read the score clock exactly once per frame; see Transport.time.
+    const time = this.transport?.loaded ? this.transport.time : 0;
+    this.frameTime = time;
     if (this.transport?.loaded && this.mode === "conduct") this.updateConductor(dt);
 
-    const time = this.transport?.loaded ? this.transport.time : 0;
     const sounding = this.waterfall.render({
       time,
       liveTime: this.engine.context.currentTime,
@@ -479,9 +499,16 @@ export class App {
   private updateConductor(dt: number): void {
     const nowSeconds = performance.now() / 1000;
     this.conductorState = relax(this.conductorState, nowSeconds, dt);
+
     // The multiplier scales the score's own tempo map. What the sequencer plays
     // at any instant is still the tempo the performer chose there, times this.
-    this.transport.rate = this.conductorState.multiplier;
+    // Pushed at 20 Hz rather than every frame: each change is a message to the
+    // synthesizer thread, and tempo steps this small are inaudible anyway.
+    if (nowSeconds - this.lastRatePush > 0.05) {
+      this.lastRatePush = nowSeconds;
+      this.transport.rate = this.conductorState.multiplier;
+    }
+
     this.engine.setDynamic(
       this.conductorState.dynamic * (1 + this.conductorState.accent) * this.dynamicsSetting,
     );
@@ -508,7 +535,7 @@ export class App {
     if (!this.scrubbing && duration > 0)
       this.scrub.value = String(Math.round((time / duration) * 1000));
 
-    const local = this.transport.localTempo;
+    const local = this.transport.localTempoAt(time);
     const rate = this.transport.rate;
     const conducted = Math.abs(rate - 1) > 0.02;
     this.tempoLine.classList.toggle("is-conducted", conducted);
@@ -593,6 +620,9 @@ export class App {
     ];
 
     this.panel = new Panel(need<HTMLElement>("panel-grid"), settings);
+    // Push the defaults through once: otherwise the panel claims a value the
+    // engine has never been told, and the first drag of a slider jumps.
+    this.panel.applyAll();
     need<HTMLButtonElement>("panel-reset").addEventListener("click", () => {
       this.panel.resetAll();
       this.resetConductor();

@@ -28,13 +28,17 @@
           </nav>
 
           <div class="bar__tools">
-            <label class="chip chip--file">
+            <!-- The input is clipped rather than [hidden]: display:none takes
+                 it out of the tab order, and then the only way to load your own
+                 file is a mouse drag. -->
+            <label class="chip chip--file" for="file-input">
               <span>Open a MIDI file</span>
               <input
                 id="file-input"
+                class="visually-hidden"
                 type="file"
                 accept=".mid,.midi,.rmi,.kar,audio/midi"
-                hidden
+                aria-label="Open a MIDI file from this computer"
               />
             </label>
             <div class="segmented" role="group" aria-label="Mode">
@@ -85,7 +89,8 @@
 
           <span class="transport__rec">
             <button id="record" type="button" class="chip chip--rec">
-              <span class="dot" aria-hidden="true"></span> Record
+              <span class="dot" aria-hidden="true"></span
+              ><span id="record-label">Record</span>
             </button>
             <button id="play-take" type="button" class="chip" disabled>Play my take</button>
           </span>
