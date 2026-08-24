@@ -63,6 +63,13 @@ Prompts:
   without a beat and it eases back to 1.0x.
 - **Recording** is written out as a real SMF, so a take goes through the same
   playback, visualisation and conductor path as a concerto.
+- **Lead-in.** Loading a piece starts the clock one full lookahead (3.6 s of
+  score time) before its first note, so the opening falls the whole height of
+  the stage instead of appearing on the keys. It also covers the ~133 ms the
+  main thread spends parsing the largest file and the synthesizer's voice
+  preloading. The sequencer is seeked when the lead-in begins, not at the
+  handover, so the cross-thread clock has settled by the time it takes over;
+  measured frame by frame, the join shows no jump.
 - **Verified in Chromium**, not just asserted: mouse, touch and typed input;
   chords and the sustain pedal; octave shift; MIDI load; tempo tracking the map
   rather than sitting at 120; mode switching without losing the playhead;
@@ -72,4 +79,5 @@ Prompts:
   no horizontal scroll at 1440x900, 1280x720, 1024x640 or 820x1180.
 - **Not verified, because it needs a person:** latency as *felt*, whether the
   conducting smoothing is playable, whether the ease-back is forgiving or
-  ignoring, and whether the orchestra is convincing at volume.
+  ignoring, whether 3.6 s of lead-in reads as anticipation or as waiting, and
+  whether the orchestra is convincing at volume.

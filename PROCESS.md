@@ -91,6 +91,34 @@ column past the viewport, putting the right-hand controls off-screen
 Re-checked at 1440x900, 1280x720, 1024x640 and 820x1180: no horizontal scroll,
 piano visible, every control reachable, zero console errors.
 
+### 4. The start of a piece was the worst-feeling moment in it
+
+Playing it, the first thing that went wrong was the beginning: pressing a piece
+started the music abruptly, with its notes already touching the keys and nothing
+visibly falling. Measuring the click found a second problem underneath — the
+main thread blocks for **133 ms** parsing the Medtner's 45,366 notes, right at
+the moment sound was supposed to start.
+
+The fix addresses both at once rather than either separately. The transport now
+runs a **lead-in** on its own clock: one full lookahead of score time before the
+first note, during which the sequencer waits and the opening bars descend the
+whole height of the stage. The parse hitch and the synthesizer's voice
+preloading both disappear behind a stretch that is meant to be quiet anyway
+([`ee78553`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-Ky787/commit/ee78553)).
+
+The risk in handing a clock from the page to another thread is a jump at the
+join, so the seek happens when the lead-in *starts*, giving the sequencer's
+cross-thread `timeChange` seconds to come back. I checked it frame by frame
+rather than by eye: the clock reads identically on the last lead-in frame and
+the first playing frame, for a piece whose first note is at 1.512 s and one
+whose first note is at 0. And the arithmetic the whole thing rests on is now a
+pure function with tests — a note reaches the keybed exactly at its start time,
+and enters at the top exactly one lookahead earlier.
+
+I did not move the parse off the main thread. 133 ms once per load, now covered
+by a painted loading state and followed by a deliberate pause, did not justify a
+worker and the cost of shipping 45,000 note objects back across it.
+
 ## Scope decisions
 
 - **A recording is written out as a real Standard MIDI File**, not kept as an
@@ -113,8 +141,9 @@ piano visible, every control reachable, zero console errors.
 
 ## Testing
 
-`pnpm check` is green: 70 spec tests over base-path safety, the tempo maps
-surviving, keyboard geometry, conductor arithmetic and the recording round trip.
+`pnpm check` is green: 75 spec tests over base-path safety, the tempo maps
+surviving, keyboard geometry, conductor arithmetic, the waterfall's
+synchronisation contract, and the recording round trip.
 `pnpm dlx linkinator ./dist` passes. The browser scenarios that produced the
 numbers quoted above are not committed — they drive a live dev server through
 `puppeteer-core` and are not part of CI — but their findings are, in the tests
