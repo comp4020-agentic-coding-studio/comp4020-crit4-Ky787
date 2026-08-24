@@ -42,6 +42,7 @@ import {
 import {
   extractNotes,
   familyForProgram,
+  FAMILY_STYLES,
   referenceTempo,
   REFERENCE_WINDOW_SECONDS,
 } from "../src/midi/analysis.ts";
@@ -79,6 +80,29 @@ describe("the page a stranger lands on", () => {
     // The pedal is on shift, not space: space is the page's transport key, and
     // Enter still activates a focused control.
     expect(invite.toLowerCase()).toContain("shift");
+  });
+
+  it("uses every id exactly once", () => {
+    // An edit that duplicated #legend also left an unbalanced </div>, which
+    // closed the overlay early and pushed the piano off the bottom of the page.
+    // getElementById returns the first match, so nothing threw and nothing in
+    // the suite noticed; the only symptom was in a screenshot.
+    const seen = new Map<string, number>();
+    for (const element of doc.querySelectorAll("[id]")) {
+      const id = element.id;
+      seen.set(id, (seen.get(id) ?? 0) + 1);
+    }
+    const duplicated = [...seen].filter(([, count]) => count > 1).map(([id]) => id);
+    expect(duplicated).toEqual([]);
+  });
+
+  it("nests the body markup correctly", () => {
+    // jsdom repairs bad nesting rather than failing, so compare the tag counts
+    // the parser ended up with against the ones the source claims to have.
+    const html = readDist("index.html").toString("utf8");
+    const opens = (html.match(/<div\b/g) ?? []).length;
+    const closes = (html.match(/<\/div>/g) ?? []).length;
+    expect(opens, "unbalanced <div> tags").toBe(closes);
   });
 
   it("keeps the settings panel out of the way until it is asked for", () => {
@@ -265,14 +289,39 @@ describe("the built-in repertoire", () => {
     expect(families).toContain("strings");
   });
 
+  it("gives every family a distinct, vivid colour", () => {
+    const styles = Object.values(FAMILY_STYLES);
+    const fills = styles.map((style) => style.fill.toLowerCase());
+    expect(new Set(fills).size, "two sections sharing a fill are two sections you cannot tell apart").toBe(
+      fills.length,
+    );
+
+    const srgb = (hex: string) =>
+      [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16) / 255);
+    for (const style of styles) {
+      if (style.label === "Other") continue; // the deliberate grey
+      const [r, g, b] = srgb(style.fill);
+      const max = Math.max(r, g, b);
+      const saturation = max === 0 ? 0 : (max - Math.min(r, g, b)) / max;
+      expect(saturation, `${style.label} is washed out`).toBeGreaterThan(0.5);
+      // and bright enough to read against the near-black stage
+      expect(max, `${style.label} is too dark on the stage`).toBeGreaterThan(0.7);
+    }
+  });
+
   it("maps General MIDI programs onto the families an audience would name", () => {
     expect(familyForProgram(0, 0)).toBe("piano"); // grand piano
     expect(familyForProgram(40, 0)).toBe("strings"); // violin
     expect(familyForProgram(48, 0)).toBe("strings"); // string ensemble
     expect(familyForProgram(56, 0)).toBe("brass"); // trumpet
     expect(familyForProgram(60, 0)).toBe("brass"); // french horn
-    expect(familyForProgram(68, 0)).toBe("woodwind"); // oboe
-    expect(familyForProgram(73, 0)).toBe("woodwind"); // flute
+    expect(familyForProgram(71, 0)).toBe("woodwind"); // clarinet
+    expect(familyForProgram(70, 0)).toBe("woodwind"); // bassoon
+    // The two that trade the top line get their own colour, oboe included,
+    // even though an oboe is a reed.
+    expect(familyForProgram(68, 0)).toBe("flute"); // oboe
+    expect(familyForProgram(73, 0)).toBe("flute"); // flute
+    expect(familyForProgram(72, 0)).toBe("flute"); // piccolo
     expect(familyForProgram(47, 0)).toBe("percussion"); // timpani
     expect(familyForProgram(46, 0)).toBe("plucked"); // harp
     expect(familyForProgram(0, 9)).toBe("percussion"); // the drum channel wins

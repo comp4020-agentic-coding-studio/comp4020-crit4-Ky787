@@ -55,6 +55,12 @@ Prompts:
   positions the waterfall draws. At a 1.5x conducted tempo the score clock simply
   runs 1.5x faster, so the picture cannot drift from the audio. There is no
   second animation clock to keep in step.
+- **Modes.** Loading a piece lands you in Conduct; Play the piano is one click
+  away. The colour key is on screen in both.
+- **Colour.** One saturated hue per section — piano blue, strings red, brass
+  orange, woodwind yellow, flute and oboe green, timpani and drums purple —
+  spread around the wheel rather than shaded within families, because the job is
+  telling sections apart. A sounding note brightens but keeps its hue.
 - **Conductor.** The ictus plane sits at 70% of the surface; a downward arrival
   at it is a beat, and the rebound above it is free.
   `multiplier = userTempo / localTempo`, where `localTempo` is a ±4-second

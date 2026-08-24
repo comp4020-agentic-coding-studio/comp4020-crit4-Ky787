@@ -135,6 +135,12 @@ prevents the default, Enter still activates a focused control, and the pedal
 moved to either shift, which does not collide with note keys because only
 Meta/Ctrl/Alt suppress a note. Do not move it back.
 
+**Loading a piece lands in Conduct, and the legend stays up in both modes.**
+Conducting is what this page does that a MIDI player does not, so it is the
+default once there is something to conduct. The colour key belongs on screen in
+both modes — it used to be hidden while conducting, which is exactly where the
+palette matters most.
+
 **Conducting is an ictus plane, not a slider.** The line sits at 70% because
 almost all of a hand's motion is the rebound and preparation above the beat.
 Only the downward arrival is read, so any shape of gesture works and no 2/4 or

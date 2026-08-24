@@ -298,6 +298,11 @@ export class App {
     this.buildLegend(score);
     this.setStatus(this.describeScore(score));
     this.applyLiveProgram();
+    // Loading a piece lands you in Conduct. Conducting is the thing this page
+    // does that a MIDI player does not, and having to find a button before you
+    // can do it made it read as an extra rather than as the point. The piano is
+    // one click away and still plays under your hands in either mode.
+    if (autoplay) this.setMode("conduct");
     this.refreshPlayButton();
   }
 
@@ -428,14 +433,13 @@ export class App {
     this.modeConduct.setAttribute("aria-pressed", String(mode === "conduct"));
     this.conductHud.toggleAttribute("hidden", mode !== "conduct");
     this.conductPrompt.toggleAttribute("hidden", mode !== "conduct");
-    this.legend.toggleAttribute("hidden", mode === "conduct");
 
     if (mode === "conduct") {
       // Switching modes must never move the playhead: the mode is a way of
       // touching the same performance, not a different performance.
       if (!this.transport.playing) this.transport.play();
       this.refreshPlayButton();
-    } else {
+    } else if (this.transport?.loaded) {
       this.endConducting();
       // Leave the music where the hand left it, and hand the slider the same
       // number, so the two controls never disagree about the current tempo.

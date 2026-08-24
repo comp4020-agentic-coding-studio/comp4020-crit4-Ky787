@@ -7,8 +7,9 @@ COMP4020 / COMP8020 Agentic Coding Studio, Crit 4 —
 
 Click a key, tap it, or type — the piano is playable the moment the page
 settles, with no instructions and no wrong notes. Load one of three concertos
-and the notes fall onto the keys they belong to, from the top of the screen. Switch to **Conduct** and beat
-downward through the line on the stage: the music follows your hand.
+and you land in **Conduct**: the notes fall from the top of the screen onto the
+keys they belong to, each section in its own colour, and the music follows your
+hand. Switch to **Play the piano** whenever you want to play along instead.
 
 ## The idea
 

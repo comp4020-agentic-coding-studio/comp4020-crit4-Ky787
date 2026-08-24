@@ -162,7 +162,7 @@ export class Waterfall {
     bottom: number,
     midi: number,
     velocity: number,
-    style: { fill: string; edge: string; glow: string },
+    style: { fill: string; edge: string; lit: string; glow: string },
     active: boolean,
     h: number,
   ): void {
@@ -183,7 +183,7 @@ export class Waterfall {
       ctx.shadowColor = style.glow;
       ctx.shadowBlur = 16;
     }
-    ctx.fillStyle = active ? style.edge : style.fill;
+    ctx.fillStyle = active ? style.lit : style.fill;
     roundRect(ctx, x, y, width, height, Math.min(4, width / 2));
     ctx.fill();
     ctx.shadowBlur = 0;

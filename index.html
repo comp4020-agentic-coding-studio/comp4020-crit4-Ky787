@@ -42,8 +42,15 @@
               />
             </label>
             <div class="segmented" role="group" aria-label="Mode">
-              <button id="mode-play" type="button" class="segmented__button is-on" aria-pressed="true">
-                Play
+              <button
+                id="mode-play"
+                type="button"
+                class="segmented__button is-on"
+                aria-pressed="true"
+                title="Play the piano yourself"
+              >
+                <span class="segmented__dot" aria-hidden="true"></span>
+                <span class="segmented__label">Play the piano</span>
               </button>
               <button
                 id="mode-conduct"
@@ -51,9 +58,10 @@
                 class="segmented__button"
                 aria-pressed="false"
                 disabled
-                title="Load a piece or record something first"
+                title="Load a piece first — then shape it with your hand"
               >
-                Conduct
+                <span class="segmented__dot" aria-hidden="true"></span>
+                <span class="segmented__label">Conduct</span>
               </button>
             </div>
             <button
@@ -101,7 +109,16 @@
         <canvas id="waterfall" class="stage__canvas"></canvas>
 
         <div class="stage__overlay">
-          <ul id="legend" class="legend" aria-label="Instrument families"></ul>
+          <div class="stage__hud">
+            <div id="conduct-hud" class="conduct-hud" hidden>
+              <p class="conduct-hud__mode">Conducting</p>
+              <p class="conduct-hud__readout">
+                <span id="conduct-multiplier">1.00×</span>
+              </p>
+              <p id="conduct-tempo" class="conduct-hud__tempo"></p>
+            </div>
+            <ul id="legend" class="legend" aria-label="Instrument families"></ul>
+          </div>
 
           <div id="invite" class="invite">
             <p class="invite__lead">Play me.</p>
@@ -109,13 +126,6 @@
               Click the keys, or type <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> and
               <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> · hold <kbd>shift</kbd> for the pedal
             </p>
-          </div>
-
-          <div id="conduct-hud" class="conduct-hud" hidden>
-            <p class="conduct-hud__readout">
-              <span id="conduct-multiplier">1.00×</span>
-            </p>
-            <p id="conduct-tempo" class="conduct-hud__tempo"></p>
           </div>
 
           <p id="conduct-prompt" class="conduct-prompt" hidden>

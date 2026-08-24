@@ -8,6 +8,7 @@ export type Family =
   | "piano"
   | "strings"
   | "woodwind"
+  | "flute"
   | "brass"
   | "percussion"
   | "voice"
@@ -36,7 +37,12 @@ export function familyForProgram(program: number, channel: number): Family {
   if (program <= 54) return "voice"; // choir aahs, voice oohs, synth voice
   if (program === 55) return "brass"; // orchestra hit
   if (program <= 63) return "brass";
-  if (program <= 79) return "woodwind"; // reeds and pipes
+  // The oboe is a reed, but it sits with the flutes here on purpose: what the
+  // colour has to do is separate the two lines an ear separates, and in this
+  // repertoire the flute and oboe are the pair that trade the top line.
+  if (program === 68) return "flute";
+  if (program <= 71) return "woodwind"; // saxes, english horn, bassoon, clarinet
+  if (program <= 79) return "flute"; // piccolo, flute, recorder, pan pipes
   if (program <= 103) return "other"; // synth lead/pad/fx
   if (program <= 111) return "other"; // ethnic
   if (program <= 119) return "percussion";
@@ -44,25 +50,45 @@ export function familyForProgram(program: number, channel: number): Family {
 }
 
 export interface FamilyStyle {
+  /** The body of a note that has not sounded yet. */
   fill: string;
+  /** The thin highlight along a note's top edge. */
   edge: string;
+  /** The body of a note while it is sounding: brighter, but still the family's
+   *  own hue. Washing it to near-white loses the colour at the one moment the
+   *  note most needs to be identifiable. */
+  lit: string;
+  /** What the note casts onto the dark behind it while sounding. */
   glow: string;
   label: string;
 }
 
 /**
- * A concert palette: warm for the soloist, cool for the body of the orchestra,
- * so the piano line reads instantly against everything behind it.
+ * One saturated hue per section, so a line can be picked out of a tutti at a
+ * glance. `edge` is the lit top of a note and the colour it takes while it is
+ * sounding; `glow` is what it casts onto the dark behind it.
+ *
+ * The hues are spread around the wheel rather than shaded within a family,
+ * because the job is telling sections apart, not showing that they are related.
+ * The piano is blue and alone in that corner of the wheel: it is the soloist,
+ * and it has to stay findable under a full orchestra.
  */
 export const FAMILY_STYLES: Record<Family, FamilyStyle> = {
-  piano: { fill: "#f6d9a4", edge: "#fff3dc", glow: "#ffcf7a", label: "Piano" },
-  strings: { fill: "#6fc9d6", edge: "#c4f0f7", glow: "#5fd0e0", label: "Strings" },
-  woodwind: { fill: "#95d67f", edge: "#d6f5c8", glow: "#8fdc74", label: "Woodwind" },
-  brass: { fill: "#e8a355", edge: "#ffd7a6", glow: "#ff9f3d", label: "Brass" },
-  percussion: { fill: "#e2718a", edge: "#ffc3cf", glow: "#ff6f8c", label: "Percussion" },
-  voice: { fill: "#b198e8", edge: "#e2d6ff", glow: "#a889f0", label: "Voice" },
-  plucked: { fill: "#7f9be0", edge: "#ccd9ff", glow: "#7591e8", label: "Plucked" },
-  other: { fill: "#8d93a8", edge: "#c9cddb", glow: "#8d93a8", label: "Other" },
+  piano: { fill: "#3d9bff", edge: "#c9e4ff", lit: "#8ec9ff", glow: "#2b8bff", label: "Piano" },
+  strings: { fill: "#ff4256", edge: "#ffc4cb", lit: "#ff8791", glow: "#ff2038", label: "Strings" },
+  brass: { fill: "#ff9614", edge: "#ffdcab", lit: "#ffbe63", glow: "#ff8400", label: "Brass" },
+  woodwind: { fill: "#ffe03d", edge: "#fff6b8", lit: "#ffee85", glow: "#ffd400", label: "Woodwind" },
+  flute: { fill: "#2fd968", edge: "#bcf7d1", lit: "#79eba1", glow: "#12c94f", label: "Flute & oboe" },
+  percussion: {
+    fill: "#a855f7",
+    edge: "#e4c9ff",
+    lit: "#c795fb",
+    glow: "#9333ea",
+    label: "Timpani & drums",
+  },
+  voice: { fill: "#ff5fd2", edge: "#ffcaf0", lit: "#ff9ae2", glow: "#f43fbf", label: "Voice" },
+  plucked: { fill: "#1fd6ee", edge: "#b6f3fb", lit: "#77e8f7", glow: "#06bcd4", label: "Plucked" },
+  other: { fill: "#98a2ba", edge: "#d2d8e6", lit: "#bcc3d2", glow: "#98a2ba", label: "Other" },
 };
 
 export interface VisualNote {
@@ -139,8 +165,9 @@ export function familiesPresent(notes: readonly VisualNote[]): Family[] {
   const order: Family[] = [
     "piano",
     "strings",
-    "woodwind",
     "brass",
+    "woodwind",
+    "flute",
     "percussion",
     "voice",
     "plucked",

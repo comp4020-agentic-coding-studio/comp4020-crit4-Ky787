@@ -180,6 +180,21 @@ less than the rubato already in the score. The score's map survives —
 109 → 136 → 125 → 132 BPM played as 153 → 190 → 175 → 185 at 1.398x, all 1,387
 tempo events intact.
 
+### 7. A silent markup bug, and the check that now catches it
+
+Restructuring the stage overlay to stack the conductor readout above the colour
+key, one of two scripted replacements did not match. It failed silently: the
+result was a duplicated `id="legend"` and an unbalanced `</div>` that closed the
+overlay early, pushing the piano off the bottom of the page.
+
+Nothing complained. `getElementById` returns the first match, so the code found
+a legend and carried on; the build passed, the type-check passed, and all 74
+tests passed. The only symptom was a screenshot with no keyboard in it. That is
+the failure mode this project keeps producing — the browser repairing bad
+markup rather than refusing it — so the fix went into the suite rather than only
+into the file: one test asserting every `id` appears exactly once, and one
+comparing `<div>` open and close counts in the built page.
+
 ## Scope decisions
 
 - **A recording is written out as a real Standard MIDI File**, not kept as an

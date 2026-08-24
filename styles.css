@@ -229,32 +229,68 @@ label {
   }
 }
 
+/* The one control that changes what the whole page is for, so it is the one
+   piece of chrome allowed to be loud. */
 .segmented {
   display: inline-flex;
-  border: 1px solid var(--line);
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgba(255, 207, 122, 0.28);
   border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .segmented__button {
-  padding: 0.34rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.4rem 0.95rem;
   border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.segmented__button:hover:not(:disabled):not(.is-on) {
+  background: rgba(255, 207, 122, 0.1);
+  color: var(--text);
 }
 
 .segmented__button:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: default;
+}
+
+/* A lamp, so which mode you are in is readable at a glance and not only from
+   which of two words happens to be filled. */
+.segmented__dot {
+  width: 0.46rem;
+  height: 0.46rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  transition:
+    opacity 0.18s,
+    box-shadow 0.18s;
 }
 
 .segmented__button.is-on {
   background: var(--gold-soft);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.segmented__button.is-on .segmented__dot {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(11, 13, 20, 0.16);
 }
 
 .round {
@@ -384,19 +420,31 @@ label {
   padding: 1rem;
 }
 
-.legend {
+/* One column at the top left: the conductor readout when it applies, and under
+   it the key to the colours, which is wanted in both modes — hiding it while
+   conducting meant the palette was never explained where it matters most. */
+.stage__hud {
   position: absolute;
-  top: 0.85rem;
+  top: 0.7rem;
   left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: flex-start;
+  max-width: 60%;
+}
+
+.legend {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 0.9rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  text-shadow: 0 1px 8px rgba(11, 13, 20, 0.95);
 }
 
 .legend li {
@@ -406,9 +454,9 @@ label {
 }
 
 .legend .swatch {
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 2px;
+  width: 0.68rem;
+  height: 0.68rem;
+  border-radius: 3px;
 }
 
 .invite {
@@ -469,9 +517,17 @@ kbd {
    belongs to the music, and a readout printed over falling notes is a readout
    nobody can read. */
 .conduct-hud {
-  position: absolute;
-  top: 0.6rem;
-  left: 1rem;
+  margin: 0;
+}
+
+.conduct-hud__mode {
+  margin: 0 0 0.15rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 1px 10px rgba(11, 13, 20, 0.95);
 }
 
 .conduct-hud__readout {
@@ -818,10 +874,6 @@ kbd {
 
 .app[data-mode="conduct"] .stage {
   cursor: crosshair;
-}
-
-.app[data-mode="conduct"] .legend {
-  opacity: 0.35;
 }
 
 /* --- narrow screens ----------------------------------------------------- */
