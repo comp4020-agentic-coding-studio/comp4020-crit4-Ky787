@@ -127,6 +127,14 @@ General MIDI programs sound different" was verified by tapping the master bus
 with an `AnalyserNode` in a real browser and comparing spectra and spectral
 centroids per program. Reading the SoundFont loading path proves nothing.
 
+**Space is the transport key; shift is the sustain pedal.** Space was the pedal
+first, which is the usual virtual-piano binding, but clicking a piece leaves
+focus on its button and space then re-activated it — reloading the piece from
+the top instead of pausing it. Space now plays/pauses everywhere and always
+prevents the default, Enter still activates a focused control, and the pedal
+moved to either shift, which does not collide with note keys because only
+Meta/Ctrl/Alt suppress a note. Do not move it back.
+
 **Check `[hidden]` actually hides.** Anything styled with `display` overrides
 it; this repo carries a global `[hidden] { display: none !important }` because
 of it.

@@ -121,6 +121,11 @@ export class App {
       onNoteOn: (midi, velocity) => this.liveNoteOn(midi, velocity),
       onNoteOff: (midi) => this.liveNoteOff(midi),
       onSustain: (down) => this.liveSustain(down),
+      onTransport: () => {
+        if (!this.transport?.loaded) return;
+        this.transport.toggle();
+        this.refreshPlayButton();
+      },
       onGesture: () => void this.wake(),
     });
     requestAnimationFrame((t) => this.frame(t));
@@ -204,7 +209,15 @@ export class App {
       const composer = document.createElement("strong");
       composer.textContent = piece.composer;
       button.append(composer, ` · ${piece.short}`);
-      button.addEventListener("click", () => void this.choosePiece(piece, button));
+      button.addEventListener("click", (event) => {
+        // A mouse click leaves focus sitting on the chip. Space is the
+        // transport key and already refuses to activate a focused control, but
+        // a stray Enter would still reload the piece, so hand focus back after
+        // a pointer click. `detail` is 0 for keyboard activation, where moving
+        // focus would strand a keyboard user.
+        if (event.detail > 0) button.blur();
+        void this.choosePiece(piece, button);
+      });
       item.append(button);
       list.append(item);
     }
@@ -340,6 +353,9 @@ export class App {
     this.playButtonShows = playing;
     this.playButton.classList.toggle("is-playing", playing);
     this.playButton.setAttribute("aria-label", playing ? "Pause" : "Play");
+    // Where the space binding gets discovered, since the opening screen has no
+    // room to teach a key that only matters once something is loaded.
+    this.playButton.title = playing ? "Pause (space)" : "Play (space)";
     const glyph = this.playButton.querySelector(".round__glyph");
     if (glyph) glyph.textContent = playing ? "❚❚" : "▶";
   }

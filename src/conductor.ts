@@ -15,8 +15,12 @@ export const MAX_BEAT_INTERVAL = 3.0; // 20 BPM
 
 /** How hard each new beat pulls the multiplier. Low = steady, high = twitchy. */
 export const TEMPO_SMOOTHING = 0.3;
-/** How hard each beat pulls the dynamic level. */
-export const DYNAMIC_SMOOTHING = 0.35;
+/**
+ * How hard each beat pulls the dynamic level. Higher than the tempo's: a
+ * conductor asking for more sound expects it on the next beat, whereas a tempo
+ * that chases every beat just feels unstable.
+ */
+export const DYNAMIC_SMOOTHING = 0.5;
 
 /** No beat for this long and the multiplier eases back to 1.0. */
 export const IDLE_RELEASE_SECONDS = 3.0;
@@ -70,12 +74,34 @@ export function multiplierFor(userTempo: number, referenceTempo: number): number
   return clampMultiplier(userTempo / referenceTempo);
 }
 
+/**
+ * Gesture size to loudness.
+ *
+ * The first version spanned 0.55x to 1.35x of gain, which sounds like a lot
+ * written down and is only about 8 dB — under a full orchestra, playing it, you
+ * could barely tell. Loudness is logarithmic, so the mapping is defined in dB
+ * and converted, and the span is now 20 dB: roughly a real pianissimo to a real
+ * forte.
+ *
+ * It is deliberately lopsided. A beat of NEUTRAL_TRAVEL is unity, and there is
+ * 16 dB below it against 4 dB above, because there is always room to take sound
+ * away and very little to add before the mix runs out of headroom. The engine's
+ * soft clipper catches what is left.
+ */
+export const NEUTRAL_TRAVEL = 0.3;
+export const MIN_TRAVEL = 0.04;
+export const MAX_TRAVEL = 0.65;
+export const MIN_DYNAMIC_DB = -16;
+export const MAX_DYNAMIC_DB = 4;
+
 /** Vertical travel between beats, as a share of the surface height. */
 export function dynamicFromGesture(travelFraction: number): number {
-  // A small flick is a hush; a full arm is a forte. Below 1.0 more than above,
-  // because clipping a loud passage is worse than losing a little air.
-  const t = Math.min(1, Math.max(0, (travelFraction - 0.04) / 0.36));
-  return 0.55 + t * 0.8; // 0.55 .. 1.35
+  const t = Math.min(MAX_TRAVEL, Math.max(MIN_TRAVEL, travelFraction));
+  const decibels =
+    t <= NEUTRAL_TRAVEL
+      ? MIN_DYNAMIC_DB * (1 - (t - MIN_TRAVEL) / (NEUTRAL_TRAVEL - MIN_TRAVEL))
+      : MAX_DYNAMIC_DB * ((t - NEUTRAL_TRAVEL) / (MAX_TRAVEL - NEUTRAL_TRAVEL));
+  return 10 ** (decibels / 20);
 }
 
 /** Downward pointer speed at the beat line, in surface heights per second. */

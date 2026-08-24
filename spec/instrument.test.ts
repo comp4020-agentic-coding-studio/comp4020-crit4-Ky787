@@ -29,7 +29,9 @@ import {
   applyBeat,
   BatonTracker,
   clampMultiplier,
+  dynamicFromGesture,
   initialConductorState,
+  NEUTRAL_TRAVEL,
   MAX_MULTIPLIER,
   MIN_MULTIPLIER,
   multiplierFor,
@@ -72,7 +74,9 @@ describe("the page a stranger lands on", () => {
     // The three inputs the brief asks for are all named on the opening screen.
     expect(invite.toLowerCase()).toMatch(/click|tap/);
     expect(invite.toLowerCase()).toContain("type");
-    expect(invite.toLowerCase()).toContain("space");
+    // The pedal is on shift, not space: space is the page's transport key, and
+    // Enter still activates a focused control.
+    expect(invite.toLowerCase()).toContain("shift");
   });
 
   it("keeps the settings panel out of the way until it is asked for", () => {
@@ -384,6 +388,36 @@ describe("conductor arithmetic", () => {
       1,
     );
     expect(large.dynamic).toBeGreaterThan(small.dynamic);
+  });
+
+  it("spans enough of a dynamic range to hear under an orchestra", () => {
+    // The first version spanned 0.55x-1.35x of gain, which is only 8 dB and was
+    // reported as barely audible while conducting. Loudness is logarithmic, so
+    // the test is in dB, not in gain.
+    const dB = (gain: number) => 20 * Math.log10(gain);
+    const quietest = dynamicFromGesture(0);
+    const loudest = dynamicFromGesture(1);
+    expect(dB(loudest) - dB(quietest)).toBeGreaterThanOrEqual(18);
+    // Headroom is asymmetric on purpose: there is always room to take sound
+    // away, and very little to add before the mix runs out.
+    expect(dB(loudest)).toBeLessThanOrEqual(6);
+    expect(dB(quietest)).toBeLessThanOrEqual(-14);
+  });
+
+  it("leaves a normal beat at the volume the score asked for", () => {
+    expect(dynamicFromGesture(NEUTRAL_TRAVEL)).toBeCloseTo(1, 6);
+  });
+
+  it("is monotone in gesture size, and clamps outside the usable travel", () => {
+    let previous = 0;
+    for (let travel = 0; travel <= 1.2; travel += 0.01) {
+      const gain = dynamicFromGesture(travel);
+      expect(gain).toBeGreaterThanOrEqual(previous);
+      expect(Number.isFinite(gain)).toBe(true);
+      previous = gain;
+    }
+    expect(dynamicFromGesture(-5)).toBe(dynamicFromGesture(0));
+    expect(dynamicFromGesture(99)).toBe(dynamicFromGesture(1));
   });
 
   it("counts a beat only on the way down through the line", () => {

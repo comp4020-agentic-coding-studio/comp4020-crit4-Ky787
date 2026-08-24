@@ -4,8 +4,8 @@
 
 **Rubato** — an 88-key piano across the bottom of the browser that answers to
 mouse, touch and typing, and, above it, a note waterfall you can conduct. Load
-one of five supplied performances (Reinecke, Hummel and Medtner concertos, a
-Medtner sonata, a Liszt hymn) and the page plays it with a General MIDI
+one of three supplied concerto performances (Reinecke, Hummel, Medtner) and the
+page plays it with a General MIDI
 SoundFont, then hands you a baton: beating downward through a line on the stage
 reshapes the tempo while you listen. The point of the mode is that it
 **multiplies the performance's own tempo map instead of replacing it**, so the
@@ -118,6 +118,34 @@ and enters at the top exactly one lookahead earlier.
 I did not move the parse off the main thread. 133 ms once per load, now covered
 by a painted loading state and followed by a deliberate pause, did not justify a
 worker and the cost of shipping 45,000 note objects back across it.
+
+### 5. Three corrections that only came from playing it
+
+Everything above was found by measuring. These came from the instrument being
+used, which is the part no check replaces.
+
+**Conducted dynamics were inaudible.** The gesture-to-loudness mapping spanned
+0.55x to 1.35x of gain, which reads as a wide range and is about 8 dB — under a
+full orchestra you could not hear it. Loudness is logarithmic and the mapping
+was not, so it is now defined in dB and spans 20, deliberately lopsided: 16 dB
+below a neutral beat against 4 above, because there is always room to take sound
+away and very little to add. Measured at the master bus while conducting, small
+beats against large now differ by **21 dB** of real output. The extra headroom
+needed catching, so the master runs through a soft clipper — a WaveShaper, not a
+compressor, because a compressor would add latency to a bus a live keyboard
+plays through and its pumping would fight the dynamics being shaped.
+
+**Space restarted the piece instead of pausing it.** Space was the sustain pedal,
+the usual virtual-piano binding. But clicking a piece leaves focus on its
+button, so space activated that button and reloaded the piece from the top. The
+binding and the bug were both wrong: space is now the transport key everywhere
+and always prevents the default (Enter still activates a focused control), the
+pedal moved to either shift, and a pointer click on a chip now returns focus to
+the page. The rule is in `CLAUDE.md` so it does not drift back.
+
+**The two solo pieces went.** The repertoire is three concertos now. The solo
+works exercised nothing the concertos do not, and conductor mode is more
+interesting with an orchestra under the soloist than with one instrument.
 
 ## Scope decisions
 

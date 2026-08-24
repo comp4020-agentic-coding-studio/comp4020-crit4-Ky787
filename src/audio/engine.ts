@@ -42,9 +42,37 @@ async function fetchWithProgress(url: string, onProgress?: LoadProgress): Promis
   return bytes.buffer;
 }
 
+/**
+ * A soft clipper for the master bus.
+ *
+ * Conducting can now ask for +4 dB over unity, and a tutti already sits close
+ * to full scale, so something has to catch the peaks. A DynamicsCompressorNode
+ * would be the obvious choice and is the wrong one here: it can add latency to
+ * a bus a live keyboard plays through, and its pumping would fight the very
+ * dynamics the conductor is shaping.
+ *
+ * This curve is exactly linear below -3 dBFS — so everything the player is
+ * actually shaping passes through untouched — and rolls off smoothly above it
+ * rather than squaring off into hard clipping. No lookahead, no latency.
+ */
+function softClipCurve(samples = 2048): Float32Array<ArrayBuffer> {
+  const KNEE = 0.7; // ≈ -3 dBFS
+  const curve = new Float32Array(new ArrayBuffer(samples * 4));
+  for (let i = 0; i < samples; i++) {
+    const x = (i / (samples - 1)) * 2 - 1;
+    const magnitude = Math.abs(x);
+    curve[i] =
+      magnitude <= KNEE
+        ? x
+        : Math.sign(x) * (KNEE + (1 - KNEE) * Math.tanh((magnitude - KNEE) / (1 - KNEE)));
+  }
+  return curve;
+}
+
 export class AudioEngine {
   readonly context: AudioContext;
   readonly master: GainNode;
+  private readonly limiter: WaveShaperNode;
   synth!: WorkletSynthesizer;
 
   private volume = 0.85;
@@ -58,7 +86,12 @@ export class AudioEngine {
     this.context = new AudioContext({ latencyHint: "interactive" });
     this.master = this.context.createGain();
     this.master.gain.value = this.volume;
-    this.master.connect(this.context.destination);
+    this.limiter = this.context.createWaveShaper();
+    this.limiter.curve = softClipCurve();
+    // "none": oversampling would improve the knee and cost latency, which on a
+    // bus a live keyboard plays through is the worse trade.
+    this.limiter.oversample = "none";
+    this.master.connect(this.limiter).connect(this.context.destination);
   }
 
   get isReady(): boolean {

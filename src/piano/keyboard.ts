@@ -13,6 +13,8 @@ export interface KeyboardCallbacks {
   onNoteOn: (midi: number, velocity: number) => void;
   onNoteOff: (midi: number) => void;
   onSustain: (down: boolean) => void;
+  /** Space, anywhere on the page: play or pause what is loaded. */
+  onTransport: () => void;
   /** Anything the player does that should wake the audio context. */
   onGesture: () => void;
 }
@@ -162,17 +164,33 @@ export class Piano {
     window.addEventListener("keydown", (event) => {
       if (isTextEntry(event.target)) return;
 
-      // A focused button or slider keeps its own Space and arrows, or the
-      // keyboard path through the controls stops working.
-      const onControl = isControl(event.target);
-
+      // Space is the transport key for the whole page, the way it is in every
+      // player people already use — including when a control has focus, which
+      // is why the default is always prevented. Clicking a piece leaves focus
+      // on its button, and without this Space would re-activate it and restart
+      // the piece from the top instead of pausing it. Enter still activates a
+      // focused control, so the keyboard path through the UI is intact.
       if (event.code === "Space") {
-        if (onControl) return;
         event.preventDefault();
+        if (event.repeat) return;
+        this.callbacks.onGesture();
+        this.callbacks.onTransport();
+        return;
+      }
+
+      // Either Shift is the sustain pedal. It sits under the left hand, and
+      // unlike Space it does not collide with the transport; holding it while
+      // playing letters works because only Meta/Ctrl/Alt suppress a note.
+      if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
         if (!event.repeat) this.setSustain(true);
         this.callbacks.onGesture();
         return;
       }
+
+      // A focused button or slider keeps its own arrow behaviour, or the
+      // keyboard path through the controls stops working.
+      const onControl = isControl(event.target);
+
       if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
         if (onControl || event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
@@ -190,7 +208,7 @@ export class Piano {
     });
 
     window.addEventListener("keyup", (event) => {
-      if (event.code === "Space") {
+      if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
         // Always lifts, even if focus moved onto a control mid-press.
         this.setSustain(false);
         return;

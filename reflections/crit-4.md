@@ -59,8 +59,14 @@ Prompts:
   `multiplier = userTempo / localTempo`, where `localTempo` is a ±4-second
   windowed average of the score's own tempo map, then smoothed (0.3 per beat,
   0.7 on the first) and clamped to 0.4x–2.0x. Vertical travel between beats sets
-  dynamics; pointer speed at the crossing adds a one-beat accent. Three seconds
-  without a beat and it eases back to 1.0x.
+  dynamics over a 20 dB span defined in decibels, not gain — the first version
+  spanned 8 dB and was inaudible while playing. Pointer speed at the crossing
+  adds a one-beat accent. Three seconds without a beat and it eases back to
+  1.0x. The master runs through a zero-latency soft clipper so the loud end
+  cannot clip.
+- **Bindings.** Space plays/pauses anywhere on the page; the sustain pedal is
+  either shift. Space was the pedal first, but it also re-activated whichever
+  piece button had focus, restarting the piece instead of pausing it.
 - **Recording** is written out as a real SMF, so a take goes through the same
   playback, visualisation and conductor path as a concerto.
 - **Lead-in.** Loading a piece starts the clock one full lookahead (3.6 s of
@@ -75,7 +81,8 @@ Prompts:
   rather than sitting at 120; mode switching without losing the playhead;
   conducting audibly changing the tempo and easing back; record and play back;
   a local file loading with zero network requests; twelve GM programs resolving
-  to distinct named presets with measurably distinct spectra; no console errors;
+  to distinct named presets with measurably distinct spectra; conducted
+  dynamics measured at 21 dB of real spread at the master bus; no console errors;
   no horizontal scroll at 1440x900, 1280x720, 1024x640 or 820x1180.
 - **Not verified, because it needs a person:** latency as *felt*, whether the
   conducting smoothing is playable, whether the ease-back is forgiving or

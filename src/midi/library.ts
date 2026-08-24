@@ -16,22 +16,6 @@ export interface Piece {
 
 export const REPERTOIRE: readonly Piece[] = [
   {
-    id: "liszt-hymne",
-    title: "Hymne à Sainte Cécile",
-    short: "Hymne",
-    composer: "Liszt",
-    file: "liszt-hymne-sainte-cecile.mid",
-    note: "Liszt — Hymne à Sainte Cécile, S. 491. Solo piano.",
-  },
-  {
-    id: "medtner-ballade",
-    title: "Sonata-Ballade",
-    short: "Sonata-Ballade",
-    composer: "Medtner",
-    file: "medtner-sonata-ballade.mid",
-    note: "Medtner — Sonata-Ballade, Op. 27. Solo piano.",
-  },
-  {
     id: "reinecke-3",
     title: "Piano Concerto No. 3",
     short: "Concerto 3",

@@ -6,15 +6,15 @@ COMP4020 / COMP8020 Agentic Coding Studio, Crit 4 —
 [*An Instrument*](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/04-instrument/).
 
 Click a key, tap it, or type — the piano is playable the moment the page
-settles, with no instructions and no wrong notes. Load one of five performances
-and the notes fall onto the keys they belong to. Switch to **Conduct** and beat
+settles, with no instructions and no wrong notes. Load one of three concertos
+and the notes fall onto the keys they belong to, from the top of the screen. Switch to **Conduct** and beat
 downward through the line on the stage: the music follows your hand.
 
 ## The idea
 
 The conductor **multiplies the performance's own tempo map** rather than
 replacing it. The supplied MIDI files carry tempo maps synchronised to real
-performances — 1,352 to 2,610 tempo events each. Flattening them to a slider
+performances — 1,387 to 2,176 tempo events each. Flattening them to a slider
 would throw away the thing that makes them worth listening to. Conducting 20%
 faster turns a local 110 → 105 → 98 → 92 into 132 → 126 → 118 → 110: your
 reading, their rubato.
@@ -25,8 +25,9 @@ reading, their rubato.
 |---|---|
 | Mouse / touch | Click or tap the keys. Strike lower on a key for a louder note; drag across for a glissando. |
 | Typing | `Z` `X` `C` `V`… and `Q` `W` `E` `R`… are two octaves, blacks on `S` `D` `G` and `2` `3` `5`. |
-| Pedal | Hold `space`. |
+| Pedal | Hold `shift` (either one). |
 | Octave | `←` and `→`. |
+| Play / pause | `space`, anywhere on the page. |
 | Conduct | Load a piece, press **Conduct**, then beat downward through the line. A bigger beat plays louder; a sharper one accents. Stop, and the tempo eases back to the score's own reading. |
 | Record | **Record**, play, **Stop**, **Play my take** — a take is a real MIDI file, so you can conduct it too. |
 | Your own MIDI | **Open a MIDI file**, or drop one on the page. It is read in the browser and never uploaded. |
@@ -60,7 +61,7 @@ one clock.
   compressed SF3 build. GeneralUser GS License v2.0, which permits
   redistribution; the licence text ships beside the file at
   `public/soundfont/LICENSE-GeneralUser-GS.txt`.
-- The five MIDI performances were supplied with this deliverable;
+- The three concerto performances were supplied with this deliverable;
   `public/midi/PROVENANCE.txt` and `validation.json` record what was corrected
   in them and that their tempo maps survived.
 
