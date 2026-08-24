@@ -1,0 +1,278 @@
+{
+  "files": [
+    {
+      "source": "Reinecke - Piano Concerto No 3 Op 144_1 synced.mid",
+      "output": "Reinecke - Piano Concerto No 3 - validated web-ready.mid",
+      "changes": "Validated unchanged; already channel-safe.",
+      "source_size": 227784,
+      "output_size": 227784,
+      "midi_type": 1,
+      "ticks_per_beat": 9600,
+      "tracks": 16,
+      "note_events_preserved": true,
+      "tempo_map_preserved": true,
+      "unmatched_note_counts": {},
+      "programs_by_channel": {
+        "0": [
+          73
+        ],
+        "1": [
+          68
+        ],
+        "2": [
+          71
+        ],
+        "3": [
+          70
+        ],
+        "4": [
+          60
+        ],
+        "5": [
+          56
+        ],
+        "6": [
+          47
+        ],
+        "7": [
+          0
+        ],
+        "10": [
+          45,
+          48
+        ],
+        "11": [
+          45,
+          48,
+          50
+        ],
+        "12": [
+          45,
+          48,
+          50
+        ],
+        "13": [
+          45,
+          48
+        ],
+        "14": [
+          45,
+          48
+        ]
+      },
+      "notes_by_channel": {
+        "0": 483,
+        "1": 563,
+        "2": 625,
+        "3": 463,
+        "4": 739,
+        "5": 120,
+        "6": 915,
+        "7": 8856,
+        "10": 977,
+        "11": 972,
+        "12": 1197,
+        "13": 811,
+        "14": 347
+      }
+    },
+    {
+      "source": "Medtner - Piano Concerto No 1 Op 33 synced.mid",
+      "output": "Medtner - Piano Concerto No 1 Op 33 - fixed web-ready.mid",
+      "changes": "Separated clarinet/tuba conflicts, removed empty-track program overrides, and added missing programs.",
+      "source_size": 599189,
+      "output_size": 507195,
+      "midi_type": 1,
+      "ticks_per_beat": 9600,
+      "tracks": 36,
+      "note_events_preserved": true,
+      "tempo_map_preserved": true,
+      "unmatched_note_counts": {},
+      "programs_by_channel": {
+        "0": [
+          73
+        ],
+        "1": [
+          68
+        ],
+        "2": [
+          71
+        ],
+        "3": [
+          70
+        ],
+        "4": [
+          60
+        ],
+        "5": [
+          56
+        ],
+        "6": [
+          57
+        ],
+        "7": [
+          47
+        ],
+        "8": [
+          0
+        ],
+        "10": [
+          48
+        ],
+        "11": [
+          48
+        ],
+        "12": [
+          48
+        ],
+        "14": [
+          48
+        ],
+        "15": [
+          58
+        ]
+      },
+      "notes_by_channel": {
+        "0": 1000,
+        "1": 1227,
+        "2": 2120,
+        "3": 1637,
+        "4": 1835,
+        "5": 250,
+        "6": 203,
+        "7": 945,
+        "8": 21204,
+        "10": 7385,
+        "11": 4111,
+        "12": 2426,
+        "14": 891,
+        "15": 132
+      }
+    },
+    {
+      "source": "Hummel - Piano Concerto No. 2_1 synced.mid",
+      "output": "Hummel - Piano Concerto No 2 - fixed web-ready.mid",
+      "changes": "Separated pizzicato/plucked layers, removed empty-track overrides, and added piano programs at tick zero.",
+      "source_size": 286737,
+      "output_size": 243605,
+      "midi_type": 1,
+      "ticks_per_beat": 9600,
+      "tracks": 32,
+      "note_events_preserved": true,
+      "tempo_map_preserved": true,
+      "unmatched_note_counts": {},
+      "programs_by_channel": {
+        "0": [
+          73
+        ],
+        "1": [
+          68
+        ],
+        "2": [
+          71
+        ],
+        "3": [
+          70
+        ],
+        "4": [
+          60
+        ],
+        "5": [
+          56
+        ],
+        "6": [
+          47
+        ],
+        "7": [
+          0
+        ],
+        "8": [
+          40
+        ],
+        "10": [
+          41
+        ],
+        "11": [
+          42
+        ],
+        "12": [
+          43
+        ],
+        "13": [
+          45
+        ],
+        "14": [
+          32
+        ]
+      },
+      "notes_by_channel": {
+        "0": 591,
+        "1": 487,
+        "2": 640,
+        "3": 816,
+        "4": 329,
+        "5": 253,
+        "6": 260,
+        "7": 10778,
+        "8": 3534,
+        "10": 1754,
+        "11": 813,
+        "12": 750,
+        "13": 210,
+        "14": 154
+      }
+    },
+    {
+      "source": "Medtner - Sonata-Ballade Op. 27 synced.mid",
+      "output": "Medtner - Sonata-Ballade Op 27 - normalized web-ready.mid",
+      "changes": "Added explicit Grand Piano program to every note-bearing track.",
+      "source_size": 152827,
+      "output_size": 124025,
+      "midi_type": 1,
+      "ticks_per_beat": 9600,
+      "tracks": 4,
+      "note_events_preserved": true,
+      "tempo_map_preserved": true,
+      "unmatched_note_counts": {},
+      "programs_by_channel": {
+        "0": [
+          0
+        ]
+      },
+      "notes_by_channel": {
+        "0": 14546
+      }
+    },
+    {
+      "source": "Liszt - Hymne a Sainte Cecile S 491 synced.mid",
+      "output": "Liszt - Hymne a Sainte Cecile S 491 - normalized web-ready.mid",
+      "changes": "Added explicit Grand Piano program to every note-bearing track.",
+      "source_size": 61879,
+      "output_size": 50917,
+      "midi_type": 1,
+      "ticks_per_beat": 9600,
+      "tracks": 3,
+      "note_events_preserved": true,
+      "tempo_map_preserved": true,
+      "unmatched_note_counts": {},
+      "programs_by_channel": {
+        "0": [
+          0
+        ]
+      },
+      "notes_by_channel": {
+        "0": 5513
+      }
+    }
+  ],
+  "validation": {
+    "requirements": [
+      "MIDI reparses successfully",
+      "ticks-per-beat unchanged",
+      "track count unchanged",
+      "all note events preserved exactly apart from intentional channel reassignment",
+      "tempo map preserved exactly",
+      "no unmatched note-on/note-off counts"
+    ]
+  }
+}

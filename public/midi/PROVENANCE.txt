@@ -1,0 +1,40 @@
+WEB-READY MIDI SET
+===================
+
+These files preserve the original note timing and dense synchronised tempo maps.
+The fixes only normalise General MIDI program/channel behaviour for browser playback.
+
+Reinecke - Piano Concerto No 3 - validated web-ready.mid
+--------------------------------------------------------
+Validated unchanged; already channel-safe.
+Type 1; 9600 ticks/beat; 16 tracks.
+Notes preserved: True; tempo map preserved: True; unmatched notes: none.
+Programs by channel: {'0': [73], '1': [68], '2': [71], '3': [70], '4': [60], '5': [56], '6': [47], '7': [0], '10': [45, 48], '11': [45, 48, 50], '12': [45, 48, 50], '13': [45, 48], '14': [45, 48]}
+
+Medtner - Piano Concerto No 1 Op 33 - fixed web-ready.mid
+---------------------------------------------------------
+Separated clarinet/tuba conflicts, removed empty-track program overrides, and added missing programs.
+Type 1; 9600 ticks/beat; 36 tracks.
+Notes preserved: True; tempo map preserved: True; unmatched notes: none.
+Programs by channel: {'0': [73], '1': [68], '2': [71], '3': [70], '4': [60], '5': [56], '6': [57], '7': [47], '8': [0], '10': [48], '11': [48], '12': [48], '14': [48], '15': [58]}
+
+Hummel - Piano Concerto No 2 - fixed web-ready.mid
+--------------------------------------------------
+Separated pizzicato/plucked layers, removed empty-track overrides, and added piano programs at tick zero.
+Type 1; 9600 ticks/beat; 32 tracks.
+Notes preserved: True; tempo map preserved: True; unmatched notes: none.
+Programs by channel: {'0': [73], '1': [68], '2': [71], '3': [70], '4': [60], '5': [56], '6': [47], '7': [0], '8': [40], '10': [41], '11': [42], '12': [43], '13': [45], '14': [32]}
+
+Medtner - Sonata-Ballade Op 27 - normalized web-ready.mid
+---------------------------------------------------------
+Added explicit Grand Piano program to every note-bearing track.
+Type 1; 9600 ticks/beat; 4 tracks.
+Notes preserved: True; tempo map preserved: True; unmatched notes: none.
+Programs by channel: {'0': [0]}
+
+Liszt - Hymne a Sainte Cecile S 491 - normalized web-ready.mid
+--------------------------------------------------------------
+Added explicit Grand Piano program to every note-bearing track.
+Type 1; 9600 ticks/beat; 3 tracks.
+Notes preserved: True; tempo map preserved: True; unmatched notes: none.
+Programs by channel: {'0': [0]}

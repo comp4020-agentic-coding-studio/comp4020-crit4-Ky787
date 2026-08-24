@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Rubato">
+  <rect width="32" height="32" rx="6" fill="#0b0d14" />
+  <g fill="#f6d9a4">
+    <rect x="5" y="8" width="5" height="17" rx="1.2" />
+    <rect x="11.5" y="8" width="5" height="17" rx="1.2" />
+    <rect x="18" y="8" width="5" height="17" rx="1.2" />
+  </g>
+  <g fill="#0b0d14">
+    <rect x="8.4" y="8" width="3.2" height="10.5" rx="0.8" />
+    <rect x="14.9" y="8" width="3.2" height="10.5" rx="0.8" />
+  </g>
+  <rect x="24.5" y="8" width="2.5" height="17" rx="1.2" fill="#ffcf7a" opacity="0.55" />
+</svg>
