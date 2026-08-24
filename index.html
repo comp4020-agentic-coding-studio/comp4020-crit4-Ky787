@@ -3,36 +3,152 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>Rubato — a piano you play and an orchestra you conduct</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="An 88-key browser piano with SoundFont sound, falling notes, one-button recording, and a conductor mode that reshapes a real orchestral performance with the movement of your hand."
     />
 
-    <!--
-      The link-preview card: public/card.png, 1200x630 --- replace it. The URL
-      resolves against this page, like any link. No og:title/og:description:
-      scrapers fall back to the <title> and description above.
-    -->
     <meta property="og:type" content="website" />
     <meta property="og:image" content="./card.png" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0b0d14" />
 
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <nav aria-label="Primary">
-        <a href="./">Home</a>
-      </nav>
-    </header>
-    <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
-    </main>
+    <div class="app" id="app" data-mode="play" data-state="loading">
+      <header class="bar">
+        <div class="bar__row bar__row--main">
+          <h1 class="wordmark">Rubato</h1>
+
+          <nav class="repertoire" aria-label="Repertoire">
+            <ul id="repertoire-list" class="repertoire__list"></ul>
+          </nav>
+
+          <div class="bar__tools">
+            <label class="chip chip--file">
+              <span>Open a MIDI file</span>
+              <input
+                id="file-input"
+                type="file"
+                accept=".mid,.midi,.rmi,.kar,audio/midi"
+                hidden
+              />
+            </label>
+            <div class="segmented" role="group" aria-label="Mode">
+              <button id="mode-play" type="button" class="segmented__button is-on" aria-pressed="true">
+                Play
+              </button>
+              <button
+                id="mode-conduct"
+                type="button"
+                class="segmented__button"
+                aria-pressed="false"
+                disabled
+                title="Load a piece or record something first"
+              >
+                Conduct
+              </button>
+            </div>
+            <button
+              id="panel-toggle"
+              type="button"
+              class="chip chip--icon"
+              aria-expanded="false"
+              aria-controls="panel"
+            >
+              Settings
+            </button>
+          </div>
+        </div>
+
+        <div class="bar__row bar__row--transport">
+          <button id="play" type="button" class="round" aria-label="Play" disabled>
+            <span class="round__glyph" aria-hidden="true">▶</span>
+          </button>
+          <span id="title" class="transport__title">Nothing loaded — the piano is ready</span>
+          <input
+            id="scrub"
+            class="scrub"
+            type="range"
+            min="0"
+            max="1000"
+            value="0"
+            step="1"
+            aria-label="Position in the piece"
+            disabled
+          />
+          <span id="time" class="transport__time" aria-live="off">0:00 / 0:00</span>
+          <span id="tempo" class="transport__tempo"></span>
+
+          <span class="transport__rec">
+            <button id="record" type="button" class="chip chip--rec">
+              <span class="dot" aria-hidden="true"></span> Record
+            </button>
+            <button id="play-take" type="button" class="chip" disabled>Play my take</button>
+          </span>
+        </div>
+      </header>
+
+      <main class="stage" id="stage">
+        <canvas id="waterfall" class="stage__canvas"></canvas>
+
+        <div class="stage__overlay">
+          <ul id="legend" class="legend" aria-label="Instrument families"></ul>
+
+          <div id="invite" class="invite">
+            <p class="invite__lead">Play me.</p>
+            <p class="invite__hint">
+              Click the keys, or type <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> and
+              <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> · hold <kbd>space</kbd> for the pedal
+            </p>
+          </div>
+
+          <div id="conduct-hud" class="conduct-hud" hidden>
+            <p class="conduct-hud__readout">
+              <span id="conduct-multiplier">1.00×</span>
+            </p>
+            <p id="conduct-tempo" class="conduct-hud__tempo"></p>
+          </div>
+
+          <p id="conduct-prompt" class="conduct-prompt" hidden>
+            Beat downward through the line · a bigger beat plays louder
+          </p>
+
+          <p id="status" class="status" role="status"></p>
+        </div>
+
+        <div id="drop-hint" class="drop-hint" hidden>Drop the MIDI file to load it</div>
+      </main>
+
+      <div class="piano-wrap">
+        <div
+          id="piano"
+          class="piano"
+          role="application"
+          tabindex="0"
+          aria-label="Piano keyboard. Play with the mouse, touch, or the computer keyboard: the Z row and the Q row are two octaves. Hold space for the sustain pedal. Left and right arrows shift the octave."
+        ></div>
+      </div>
+
+      <aside id="panel" class="panel" hidden aria-label="Sound and transformation settings">
+        <h2 class="panel__title">Sound</h2>
+        <div class="panel__grid" id="panel-grid"></div>
+        <p class="panel__note">
+          These are the explicit transforms. Tempo and dynamics also answer to your hand in
+          conductor mode.
+        </p>
+        <button id="panel-reset" type="button" class="chip">Reset all</button>
+      </aside>
+
+      <div class="boot" id="boot" aria-live="polite">
+        <p class="boot__label">Warming the strings…</p>
+        <div class="boot__track"><div class="boot__fill" id="boot-fill"></div></div>
+      </div>
+    </div>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

@@ -1,42 +1,119 @@
-# COMP4020 prototype
+# COMP4020/COMP8020 Crit 4 — Instrument
 
-Your starter repo for a COMP4020 prototype: a static site in HTML/CSS/TypeScript
-that builds to plain HTML/CSS/JS and deploys to GitHub Pages. The deployed site
-is what gets marked, not this repo.
+## Project goal
 
-The
-[course website](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/)
-publishes this deliverable's brief and spec, and this repo's name tells you
-which deliverable applies. Read both before you plan or build.
+This repository implements Crit 4, “An Instrument”.
 
-## How to work in here
+The browser must itself be an expressive musical instrument. Prioritise playability and interaction quality over feature count.
 
-- Keep the dev server running (`pnpm dev`) so you see changes as you make them.
-- Run `pnpm check` before you push.
-- Open the page in a browser and look at it. The rendered page is the truth;
-  your mental model of it isn't.
-- When a check fails, read its output before you change anything.
-- Never commit a red state.
+Course brief:
+https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/04-instrument/
 
-## The link-preview card
+## Core experience
 
-`public/card.png` (1200x630) is the image a shared link shows; `index.html`'s
-head points at it. Replace it and the `description` meta, and copy the head
-block into any new page. The card URL resolves against the page that names it,
-like any link --- `./card.png` is wrong one directory down, and nothing in CI
-checks it, so look at the deployed head when you add pages.
+The project is a browser piano/MIDI instrument with:
 
-## The checks
+* an on-screen piano fixed along the bottom of the main experience;
+* mouse, touch and computer-keyboard piano input;
+* falling-note visualization;
+* live piano recording and playback;
+* built-in and locally uploaded MIDI playback;
+* multi-instrument General MIDI/SoundFont synthesis;
+* a conductor mode that reshapes MIDI playback live.
 
-`pnpm check` runs them (`pnpm check:evidence` is the extra gate before you
-ship); CI runs the same plus links, secrets and the deploy. Read the failure.
+The UI should feel like an instrument, not a DAW.
 
-`spec/README.md`, `PROCESS.md` and `reflections/README.md` are in this repo and
-say what they are for.
+## UX rules
 
-## This file is yours
+* The first screen must immediately invite the user to make sound.
+* The piano and music visualization are visually dominant.
+* Keep permanent controls minimal.
+* Put secondary transforms/settings in a collapsible panel.
+* Do not require instructions before the first interaction.
+* There is no score, failure state or wrong way to play.
+* Mouse, keyboard and touch should all be meaningful inputs.
+* Avoid generic dashboard styling.
 
-A starting point, not a rulebook. As you learn what your prototype needs --- a
-convention the work has to hold to, a sensor that keeps catching you out (a
-linter, say), a fact about the stack that is easy to get wrong --- write it down
-here and wire it into `check`. Growing this file is the work.
+## MIDI rules
+
+The supplied MIDI examples contain synchronised variable-tempo maps.
+
+Never flatten them to a fixed BPM.
+
+Preserve where supported:
+
+* tempo events;
+* time signatures;
+* note velocity/duration;
+* program/instrument assignments;
+* sustain;
+* expression and volume controllers.
+
+Prefer `spessasynth_lib` for browser SoundFont/MIDI synthesis unless there is a documented technical reason to use something else.
+
+Built-in MIDI and SoundFont assets must work from the deployed GitHub Pages base path.
+
+## Conductor mode
+
+Conductor mode should be gesture-first, not slider-first.
+
+The main interaction is a baton-like pointer/touch gesture over the central visualization.
+
+A downward crossing of a beat line can establish conducted beats.
+
+Conducted tempo modifies the MIDI's existing local tempo:
+
+`effective tempo = original local tempo × conductor multiplier`
+
+Smooth conductor input to avoid jitter.
+
+Gesture size may influence dynamics and gesture velocity may influence accents if this feels musical.
+
+Transpose/tuning and similar non-conductor transformations belong in secondary controls.
+
+## Engineering priorities
+
+Prioritise in this order:
+
+1. responsive live piano;
+2. correct multi-instrument MIDI playback;
+3. synchronised falling-note visualization;
+4. recording/playback;
+5. reliable conductor tempo control;
+6. expressive conducting;
+7. secondary transformations;
+8. visual polish.
+
+Do not sacrifice reliable core interaction to add marginal features.
+
+Keep audio timing separate from animation timing.
+
+For large MIDI files, render only the visible note window rather than creating DOM elements for every note.
+
+## Project constraints
+
+* Preserve the starter/invariant checks.
+* Preserve GitHub Pages deployment.
+* Run the existing checks before and after substantial changes.
+* Avoid unnecessary architecture rewrites.
+* Do not hardcode deployment-root asset URLs.
+* Resume Web Audio only after an appropriate user gesture.
+* Keep client-side MIDI uploads local to the browser.
+
+## Process
+
+Work incrementally and make meaningful commits at working milestones.
+
+Keep `PROCESS.md` factual and current with:
+
+* decisions;
+* experiments;
+* problems;
+* corrections;
+* scope changes;
+* testing results.
+
+Do not fabricate subjective reflection content in `reflections/crit-4.md`; factual implementation notes and clearly marked reflection prompts are fine.
+
+When an external library API is uncertain, check its current documentation/examples rather than guessing.
+

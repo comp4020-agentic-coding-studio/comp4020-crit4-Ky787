@@ -20,5 +20,9 @@
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
   },
-  "packageManager": "pnpm@11.9.0"
+  "packageManager": "pnpm@11.9.0",
+  "dependencies": {
+    "spessasynth_core": "^4.3.20",
+    "spessasynth_lib": "^4.3.14"
+  }
 }

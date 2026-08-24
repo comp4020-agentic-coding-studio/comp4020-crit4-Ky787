@@ -7,6 +7,13 @@ settings:
 importers:
 
   .:
+    dependencies:
+      spessasynth_core:
+        specifier: ^4.3.20
+        version: 4.3.20
+      spessasynth_lib:
+        specifier: ^4.3.14
+        version: 4.3.14
     devDependencies:
       '@types/jsdom':
         specifier: ^27.0.0
@@ -479,8 +486,17 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
+  spessasynth_core@4.3.20:
+    resolution: {integrity: sha512-RcYCXemGESRKIRbGEAGOwFgNSXcsuLMptjk3BmRTJJWtF6RH4KLRXKkUs6rzREUh3ooInfsJla/sRmWvwZzjhw==}
+
+  spessasynth_lib@4.3.14:
+    resolution: {integrity: sha512-M3In44Erc0OPlbLwOrPoqnMiva0nbh7LCbGfNTi21JV+NMN/B4sun2d8HR17J/dSGp+PEQnJ0ZkujnWEHWfi4Q==}
+
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
+
+  stb-vorbis@0.0.6:
+    resolution: {integrity: sha512-CyvjJEGROIdnuZknwFvdOfMIO1ssUxO2OawsXCR3IlbJ8z2IMBjDe8FDxFJqBfLgf1ZOdqvoHAYx3Xk8q9rbbg==}
 
   std-env@4.2.0:
     resolution: {integrity: sha512-oCUKSupKTHX53EyjDtuZQ64pjLJ6yYCtpmEw0goYxtjG9KpbRe8KAsl2tBUGU9DyMcJ0RwJ8GqJAFzMXcXW1Rw==}
@@ -1037,7 +1053,17 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
+  spessasynth_core@4.3.20:
+    dependencies:
+      stb-vorbis: 0.0.6
+
+  spessasynth_lib@4.3.14:
+    dependencies:
+      spessasynth_core: 4.3.20
+
   stackback@0.0.2: {}
+
+  stb-vorbis@0.0.6: {}
 
   std-env@4.2.0: {}
 
