@@ -487,7 +487,6 @@ export class App {
               beatLine: BEAT_LINE,
               trail: this.baton.trail,
               flash: this.beatFlash,
-              multiplier: this.conductorState.multiplier,
             }
           : undefined,
     });

@@ -115,12 +115,6 @@ export class Recorder {
     return { events: this.events, length, program: this.program };
   }
 
-  cancel(): void {
-    this.recording = false;
-    this.events = [];
-    this.held.clear();
-  }
-
   noteOn(midi: number, velocity: number): void {
     if (!this.recording) return;
     this.events.push({ kind: "on", time: this.elapsed, midi, velocity });

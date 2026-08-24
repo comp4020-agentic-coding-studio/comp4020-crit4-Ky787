@@ -32,7 +32,6 @@ export interface RenderInput {
     beatLine: number;
     trail: readonly { x: number; y: number }[];
     flash: number;
-    multiplier: number;
   };
 }
 
@@ -59,11 +58,6 @@ export class Waterfall {
   setNotes(notes: readonly VisualNote[]): void {
     this.notes = notes;
     this.maxNoteLength = notes.reduce((max, note) => Math.max(max, note.end - note.start), 0);
-  }
-
-  clearNotes(): void {
-    this.notes = [];
-    this.maxNoteLength = 0;
   }
 
   resize(): void {

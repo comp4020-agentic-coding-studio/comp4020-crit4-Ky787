@@ -28,7 +28,6 @@ export class Transport {
   score?: LoadedScore;
 
   onSongEnded?: () => void;
-  onScoreLoaded?: (score: LoadedScore) => void;
 
   constructor(private readonly engine: AudioEngine) {
     this.seq = new Sequencer(engine.synth, { skipToFirstNoteOn: true });
@@ -63,7 +62,6 @@ export class Transport {
     this.seq.playbackRate = 1;
     if (!autoplay) this.seq.pause();
     this.score = score;
-    this.onScoreLoaded?.(score);
     return score;
   }
 
@@ -88,11 +86,6 @@ export class Transport {
 
   get duration(): number {
     return this.score?.duration ?? 0;
-  }
-
-  /** The tempo-map value at the playhead, in BPM. Spiky by nature. */
-  get instantTempo(): number {
-    return this.seq.currentTempo;
   }
 
   /**
@@ -132,11 +125,5 @@ export class Transport {
   seek(seconds: number): void {
     if (!this.loaded) return;
     this.seq.currentTime = Math.max(0, Math.min(seconds, this.duration));
-  }
-
-  stop(): void {
-    if (!this.loaded) return;
-    this.seq.pause();
-    this.seek(0);
   }
 }

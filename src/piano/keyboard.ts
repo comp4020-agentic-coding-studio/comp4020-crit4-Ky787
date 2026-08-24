@@ -6,7 +6,7 @@
 // routine. 88 nodes is nothing; the waterfall above is where the note count
 // actually bites.
 
-import { keyLayout, LOWEST_MIDI, noteName, type KeyBox } from "./geometry.ts";
+import { keyLayout, noteName, type KeyBox } from "./geometry.ts";
 import { clampBaseMidi, DEFAULT_BASE_MIDI, keymapForBase, labelsForBase } from "./keymap.ts";
 
 export interface KeyboardCallbacks {
@@ -36,8 +36,6 @@ export class Piano {
   private keymap = keymapForBase(DEFAULT_BASE_MIDI);
   private baseMidi = DEFAULT_BASE_MIDI;
   private sustaining = false;
-
-  onBaseChange?: (base: number) => void;
 
   constructor(
     private readonly root: HTMLElement,
@@ -98,11 +96,6 @@ export class Piano {
     this.baseMidi = next;
     this.keymap = keymapForBase(next);
     this.relabel();
-    this.onBaseChange?.(next);
-  }
-
-  get base(): number {
-    return this.baseMidi;
   }
 
   // --- pointer ------------------------------------------------------------
@@ -237,10 +230,6 @@ export class Piano {
     this.callbacks.onSustain(down);
   }
 
-  get isSustaining(): boolean {
-    return this.sustaining;
-  }
-
   allOff(): void {
     for (const midi of [...this.held]) this.release(midi);
     this.typed.clear();
@@ -275,5 +264,3 @@ function isControl(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return ["BUTTON", "INPUT", "SELECT", "A", "SUMMARY"].includes(target.tagName);
 }
-
-export { LOWEST_MIDI };
