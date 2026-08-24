@@ -570,6 +570,16 @@ kbd {
   filter: brightness(0.45) saturate(0.4);
 }
 
+/* Parsing a concerto blocks the main thread for a beat. The cursor is the one
+   thing the browser keeps updating while it does, so it does the reporting. */
+.app[data-state="loading-score"] {
+  cursor: progress;
+}
+
+.app[data-state="loading-score"] .repertoire {
+  opacity: 0.55;
+}
+
 .piano-row {
   position: absolute;
   inset: 0;

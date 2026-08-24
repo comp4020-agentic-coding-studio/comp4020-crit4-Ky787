@@ -23,9 +23,33 @@ export interface LoadedScore {
   tempoChangeCount: number;
 }
 
+/**
+ * The lead-in: the stretch of score time before the first note, played out on
+ * the app's own clock while the sequencer waits.
+ *
+ * It buys two things. The first note falls the whole height of the screen
+ * instead of appearing on the keybed the instant you press play, which is what
+ * a piece starting is supposed to look like. And it hides the cost of getting
+ * going — parsing a 45,000-note concerto blocks the main thread for about
+ * 150 ms, and the synthesizer thread is still preloading voices — behind
+ * something that is deliberately quiet anyway.
+ */
+interface LeadIn {
+  /** Score seconds at the top of the screen. Usually negative. */
+  from: number;
+  /** Score seconds of the first note: where the sequencer takes over. */
+  to: number;
+  elapsed: number;
+  running: boolean;
+  lastNow: number;
+}
+
+const now = (): number => performance.now() / 1000;
+
 export class Transport {
   private readonly seq: Sequencer;
   score?: LoadedScore;
+  private lead?: LeadIn;
 
   onSongEnded?: () => void;
 
@@ -45,7 +69,10 @@ export class Transport {
    * same bytes the sequencer gets, rather than round-tripping the parsed file
    * back out of the worklet.
    */
-  async load(source: LoadedMIDI, { autoplay = false } = {}): Promise<LoadedScore> {
+  async load(
+    source: LoadedMIDI,
+    { autoplay = false, leadIn = 0 } = {},
+  ): Promise<LoadedScore> {
     const midi = BasicMIDI.fromArrayBuffer(source.binary.slice(0), source.fileName);
     const notes = extractNotes(midi);
     const tempos = new Set(midi.tempoChanges.map((change) => Math.round(change.tempo * 100)));
@@ -60,9 +87,65 @@ export class Transport {
 
     this.seq.loadNewSongList([{ binary: source.binary, fileName: source.fileName }]);
     this.seq.playbackRate = 1;
-    if (!autoplay) this.seq.pause();
+    this.seq.pause();
+    this.lead = undefined;
     this.score = score;
+    if (autoplay) this.startWithLeadIn(leadIn);
     return score;
+  }
+
+  /**
+   * Run `seconds` of score time up to the first note on our own clock, then
+   * hand over to the sequencer.
+   *
+   * The seek happens now, not at the handover: the sequencer's clock lives on
+   * another thread and a `timeChange` has to come back before `play()` resumes
+   * from the right place. Seconds of lead-in is more than enough for that round
+   * trip, so the join is silent.
+   */
+  private startWithLeadIn(seconds: number): void {
+    if (!this.score) return;
+    const firstNote = this.score.notes[0]?.start ?? 0;
+    this.seq.currentTime = firstNote;
+    if (seconds <= 0) {
+      this.seq.play();
+      return;
+    }
+    this.lead = {
+      from: firstNote - seconds,
+      to: firstNote,
+      elapsed: 0,
+      running: true,
+      lastNow: now(),
+    };
+  }
+
+  get isLeadingIn(): boolean {
+    return this.lead !== undefined;
+  }
+
+  /**
+   * Advance the clock and return this frame's score time. Call exactly once per
+   * frame: it both reads the smoothed sequencer clock (which advances its own
+   * filter on read) and is where the lead-in hands over to playback.
+   */
+  tick(): number {
+    if (!this.loaded) return 0;
+    const lead = this.lead;
+    if (!lead) return this.seq.currentHighResolutionTime;
+
+    if (lead.running) {
+      const at = now();
+      lead.elapsed += at - lead.lastNow;
+      lead.lastNow = at;
+    }
+    const time = lead.from + lead.elapsed;
+    if (lead.running && time >= lead.to) {
+      this.lead = undefined;
+      this.seq.play();
+      return lead.to;
+    }
+    return Math.min(time, lead.to);
   }
 
   get loaded(): boolean {
@@ -70,18 +153,10 @@ export class Transport {
   }
 
   get playing(): boolean {
-    return this.loaded && !this.seq.paused;
-  }
-
-  /**
-   * Score seconds. Smoothed, so it is the one to draw with.
-   *
-   * Reading it advances the smoothing filter, so read it once per frame and
-   * pass the value around — calling it three times in one frame triples the
-   * filter's rate and quietly changes how it behaves.
-   */
-  get time(): number {
-    return this.loaded ? this.seq.currentHighResolutionTime : 0;
+    if (!this.loaded) return false;
+    // A lead-in is playing — it is the opening of the piece, just a silent
+    // part of it — so the pause button has to say so.
+    return this.lead ? this.lead.running : !this.seq.paused;
   }
 
   get duration(): number {
@@ -109,11 +184,22 @@ export class Transport {
 
   play(): void {
     if (!this.loaded) return;
+    if (this.lead) {
+      // Resume the lead-in where it stopped rather than restarting it, so
+      // pausing during the opening is not a way to replay the opening.
+      this.lead.running = true;
+      this.lead.lastNow = now();
+      return;
+    }
     this.seq.play();
   }
 
   pause(): void {
     if (!this.loaded) return;
+    if (this.lead) {
+      this.lead.running = false;
+      return;
+    }
     this.seq.pause();
   }
 
@@ -122,8 +208,12 @@ export class Transport {
     else this.play();
   }
 
+  /** Scrubbing means you have somewhere else in mind; the lead-in is over. */
   seek(seconds: number): void {
     if (!this.loaded) return;
+    const resume = this.lead?.running ?? false;
+    this.lead = undefined;
     this.seq.currentTime = Math.max(0, Math.min(seconds, this.duration));
+    if (resume) this.seq.play();
   }
 }

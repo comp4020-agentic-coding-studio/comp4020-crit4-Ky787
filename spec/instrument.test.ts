@@ -41,6 +41,7 @@ import {
   referenceTempo,
   REFERENCE_WINDOW_SECONDS,
 } from "../src/midi/analysis.ts";
+import { notePosition } from "../src/visualizer.ts";
 import { buildRecordingMIDI, type Recording } from "../src/recorder.ts";
 import { REPERTOIRE } from "../src/midi/library.ts";
 
@@ -397,6 +398,55 @@ describe("conductor arithmetic", () => {
     const second = baton.push({ x: 0.5, y: 0.8, t: 0.7 });
     expect(second?.interval).toBeCloseTo(0.5, 6);
     expect(second?.travel).toBeGreaterThan(0.5);
+  });
+});
+
+// --- the falling notes line up with the sound, and with the lead-in --------
+
+describe("the waterfall's synchronisation contract", () => {
+  const H = 600;
+  const LOOKAHEAD = 3.6;
+
+  it("lands a note on the keybed exactly at its start time", () => {
+    const { bottom } = notePosition(12, 13, 12, H, LOOKAHEAD);
+    expect(bottom).toBeCloseTo(H, 9);
+  });
+
+  it("brings a note in at the top exactly one lookahead earlier", () => {
+    const { bottom } = notePosition(12, 13, 12 - LOOKAHEAD, H, LOOKAHEAD);
+    expect(bottom).toBeCloseTo(0, 9);
+  });
+
+  it("draws a note's length as its height, whatever the tempo", () => {
+    // The renderer is never told the playback rate: `time` is score seconds, so
+    // a conducted 2x simply advances `time` twice as fast through the same map.
+    for (const time of [8, 10, 11.5, 12]) {
+      const { top, bottom } = notePosition(12, 14, time, H, LOOKAHEAD);
+      expect(bottom - top).toBeCloseTo((2 / LOOKAHEAD) * H, 9);
+    }
+  });
+
+  it("moves the picture at one screen height per lookahead", () => {
+    const a = notePosition(12, 13, 5, H, LOOKAHEAD).bottom;
+    const b = notePosition(12, 13, 5 + LOOKAHEAD, H, LOOKAHEAD).bottom;
+    expect(b - a).toBeCloseTo(H, 9);
+  });
+
+  it("puts the first note of a piece at the very top when the lead-in starts", () => {
+    // What the lead-in is for: the transport starts the clock a full lookahead
+    // before the first note, so the piece arrives from the top of the stage
+    // instead of appearing on the keys the instant playback begins.
+    for (const firstNote of [0, 1.512, 30]) {
+      const leadFrom = firstNote - LOOKAHEAD;
+      expect(notePosition(firstNote, firstNote + 1, leadFrom, H, LOOKAHEAD).bottom).toBeCloseTo(
+        0,
+        9,
+      );
+      expect(notePosition(firstNote, firstNote + 1, firstNote, H, LOOKAHEAD).bottom).toBeCloseTo(
+        H,
+        9,
+      );
+    }
   });
 });
 

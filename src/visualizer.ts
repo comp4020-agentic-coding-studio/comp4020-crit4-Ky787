@@ -37,6 +37,30 @@ export interface RenderInput {
 
 const LIVE_FADE = 1.8; // seconds a released live note stays visible
 
+/**
+ * Where a note sits on the stage, in pixels from the top.
+ *
+ * This is the whole synchronisation contract, and it is two lines: a note's
+ * bottom edge reaches the keybed exactly at its start time, and it enters at
+ * the top exactly one lookahead earlier. Because `time` is score seconds and so
+ * are `start` and `end`, this holds at any playback rate without the renderer
+ * knowing what the rate is — and it is what makes the lead-in work, since a
+ * time of `start - lookahead` puts the first note precisely at the top edge.
+ */
+export function notePosition(
+  start: number,
+  end: number,
+  time: number,
+  height: number,
+  lookahead: number,
+): { top: number; bottom: number } {
+  const perSecond = height / lookahead;
+  return {
+    top: height - (end - time) * perSecond,
+    bottom: height - (start - time) * perSecond,
+  };
+}
+
 export class Waterfall {
   private readonly ctx: CanvasRenderingContext2D;
   private notes: readonly VisualNote[] = [];
@@ -98,7 +122,6 @@ export class Waterfall {
     ctx.fillRect(0, 0, w, h);
     this.drawOctaveGuides();
 
-    const pps = h / this.lookahead;
     const from = input.time;
     const until = input.time + this.lookahead;
 
@@ -109,8 +132,7 @@ export class Waterfall {
       const centre = this.centres[note.midi];
       if (centre < 0) continue;
 
-      const bottom = h - (note.start - input.time) * pps;
-      const top = h - (note.end - input.time) * pps;
+      const { top, bottom } = notePosition(note.start, note.end, input.time, h, this.lookahead);
       const style = FAMILY_STYLES[note.family];
       const active = note.start <= input.time && note.end > input.time;
       if (active) sounding.add(note.midi);

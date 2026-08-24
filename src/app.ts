@@ -96,6 +96,7 @@ export class App {
   /** This frame's score time, so nothing reads the smoothed clock twice. */
   private frameTime = 0;
   private lastRatePush = 0;
+  private loadingScore = false;
   private playButtonShows?: boolean;
 
   /** For the browser checks and the console: see main.ts. */
@@ -249,7 +250,29 @@ export class App {
   }
 
   private async loadScore(source: LoadedMIDI, autoplay: boolean): Promise<void> {
-    const score = await this.transport.load(source, { autoplay: false });
+    // Two loads at once would interleave a parse with a sequencer swap.
+    if (this.loadingScore) return;
+    this.loadingScore = true;
+    // Parsing a concerto blocks the main thread for ~150 ms, so let the browser
+    // paint the "loading" state first. Otherwise the click appears to do
+    // nothing until the music is already underway.
+    this.root.dataset.state = "loading-score";
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    let score: LoadedScore;
+    try {
+      score = await this.transport.load(source, {
+        autoplay,
+        // Start the clock a full screen's worth of time before the first note,
+        // so the piece arrives from the top of the stage, not on the keybed.
+        leadIn: this.waterfall.lookahead,
+      });
+    } finally {
+      // A file that fails to parse must not leave the loader wedged shut.
+      this.root.dataset.state = "ready";
+      this.loadingScore = false;
+    }
+
     this.waterfall.setNotes(score.notes);
     this.resetConductor();
     this.transport.rate = this.manualRate;
@@ -262,10 +285,7 @@ export class App {
     this.buildLegend(score);
     this.setStatus(this.describeScore(score));
     this.applyLiveProgram();
-    if (autoplay) {
-      this.transport.play();
-      this.refreshPlayButton();
-    }
+    this.refreshPlayButton();
   }
 
   private describeScore(score: LoadedScore): string {
@@ -481,8 +501,9 @@ export class App {
     this.lastFrame = now;
     this.beatFlash = Math.max(0, this.beatFlash - dt * 4);
 
-    // Read the score clock exactly once per frame; see Transport.time.
-    const time = this.transport?.loaded ? this.transport.time : 0;
+    // Drives the transport's clock, and is where a lead-in hands over to
+    // playback. Exactly once per frame; see Transport.tick.
+    const time = this.transport?.tick() ?? 0;
     this.frameTime = time;
     if (this.transport?.loaded && this.mode === "conduct") this.updateConductor(dt);
 
@@ -541,7 +562,9 @@ export class App {
     const duration = this.transport.duration;
     setText(this.timeLine, `${formatTime(time)} / ${formatTime(duration)}`);
     if (!this.scrubbing && duration > 0) {
-      const position = String(Math.round((time / duration) * 1000));
+      // Lead-in time is negative; the slider's own floor is 0, so clamp here or
+      // it disagrees with what we wrote and we rewrite it every frame.
+      const position = String(Math.max(0, Math.round((time / duration) * 1000)));
       if (this.scrub.value !== position) this.scrub.value = position;
     }
 
