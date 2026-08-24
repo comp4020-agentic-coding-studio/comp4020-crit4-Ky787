@@ -31,7 +31,12 @@ export interface RenderInput {
   conductor?: {
     beatLine: number;
     trail: readonly { x: number; y: number }[];
+    /** 1 at the instant of a beat, decaying to 0 over the next quarter second. */
     flash: number;
+    /** Height of the swing in progress, above the plane, 0..1. */
+    lift: number;
+    /** Where on the plane the last beat landed, 0..1 across. */
+    ictusX?: number;
   };
 }
 
@@ -247,19 +252,80 @@ export class Waterfall {
     ctx.fillRect(0, this.height - 1.5, this.width, 1.5);
   }
 
+  /**
+   * The conducting surface: an ictus plane to arrive at, a mark showing how big
+   * the swing above it currently is, and the baton's own trail.
+   *
+   * Together those three make the cycle readable without a word of instruction.
+   * The trail shows the rebound leaving the plane, the swing mark rises with it
+   * so you can see the dynamic you are winding up to, and the plane pulses when
+   * you arrive. Nothing here asks for a 3/4 or a 4/4 pattern: only the downward
+   * arrival is read, so any shape of hand movement works.
+   */
   private drawConductor(conductor: NonNullable<RenderInput["conductor"]>): void {
     const { ctx } = this;
     const y = conductor.beatLine * this.height;
 
+    // How high this swing has reached. The gap between this and the plane is
+    // the dynamic, made visible before the beat rather than reported after it.
+    if (conductor.lift > 0.012) {
+      const apex = Math.max(0, (conductor.beatLine - conductor.lift) * this.height);
+      const strength = Math.min(1, conductor.lift / 0.55);
+      ctx.save();
+      const wash = ctx.createLinearGradient(0, apex, 0, y);
+      wash.addColorStop(0, `rgba(255,207,122,${0.015 + strength * 0.05})`);
+      wash.addColorStop(1, "rgba(255,207,122,0)");
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, apex, this.width, y - apex);
+      ctx.strokeStyle = `rgba(255,229,190,${0.1 + strength * 0.3})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, apex + 0.5);
+      ctx.lineTo(this.width, apex + 0.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // The plane itself.
     ctx.save();
-    ctx.strokeStyle = `rgba(255,214,153,${0.16 + conductor.flash * 0.6})`;
+    ctx.strokeStyle = `rgba(255,214,153,${0.22 + conductor.flash * 0.6})`;
     ctx.lineWidth = 1 + conductor.flash * 2.5;
     ctx.setLineDash([14, 12]);
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(this.width, y);
     ctx.stroke();
+    ctx.setLineDash([]);
+
+    // A caret at each end, pointing the way the beat is taken: downward, onto
+    // the line. Two small glyphs instead of a sentence of instructions.
+    ctx.fillStyle = `rgba(255,214,153,${0.45 + conductor.flash * 0.5})`;
+    for (const x of [14, this.width - 14]) {
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y - 9);
+      ctx.lineTo(x + 5, y - 9);
+      ctx.lineTo(x, y - 2);
+      ctx.closePath();
+      ctx.fill();
+    }
     ctx.restore();
+
+    // The arrival, marked where it happened and spreading along the plane.
+    if (conductor.flash > 0.02 && conductor.ictusX !== undefined) {
+      ctx.save();
+      const cx = conductor.ictusX * this.width;
+      const spread = (1 - conductor.flash) * 90;
+      ctx.strokeStyle = `rgba(255,238,205,${conductor.flash * 0.6})`;
+      ctx.lineWidth = 1.5 + conductor.flash * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - spread, y);
+      ctx.lineTo(cx + spread, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, y, 4 + spread * 0.12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     const trail = conductor.trail;
     if (trail.length > 1) {

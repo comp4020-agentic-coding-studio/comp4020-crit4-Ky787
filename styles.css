@@ -496,7 +496,9 @@ kbd {
 .conduct-prompt {
   position: absolute;
   left: 50%;
-  bottom: clamp(2rem, 12vh, 6rem);
+  /* Sitting just above the ictus plane, so it reads as a label for the line
+     rather than as a notice floating in the middle of the music. */
+  top: calc(70% - 2.9rem);
   transform: translateX(-50%);
   margin: 0;
   padding: 0.35rem 0.9rem;
@@ -506,6 +508,9 @@ kbd {
   letter-spacing: 0.03em;
   color: var(--gold-soft);
   white-space: nowrap;
+  max-width: calc(100% - 2rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: opacity 0.5s ease;
 }
 

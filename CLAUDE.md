@@ -135,6 +135,14 @@ prevents the default, Enter still activates a focused control, and the pedal
 moved to either shift, which does not collide with note keys because only
 Meta/Ctrl/Alt suppress a note. Do not move it back.
 
+**Conducting is an ictus plane, not a slider.** The line sits at 70% because
+almost all of a hand's motion is the rebound and preparation above the beat.
+Only the downward arrival is read, so any shape of gesture works and no 2/4 or
+4/4 pattern is required. Dynamics come from the highest point reached above the
+plane since the last beat — the size of the swing brought down onto it — not
+from travel through it, which used to reward a cramped jab that overshot below
+the line.
+
 **Check `[hidden]` actually hides.** Anything styled with `display` overrides
 it; this repo carries a global `[hidden] { display: none !important }` because
 of it.

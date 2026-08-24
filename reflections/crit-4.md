@@ -55,12 +55,15 @@ Prompts:
   positions the waterfall draws. At a 1.5x conducted tempo the score clock simply
   runs 1.5x faster, so the picture cannot drift from the audio. There is no
   second animation clock to keep in step.
-- **Conductor.** A downward crossing of the beat line is a beat.
+- **Conductor.** The ictus plane sits at 70% of the surface; a downward arrival
+  at it is a beat, and the rebound above it is free.
   `multiplier = userTempo / localTempo`, where `localTempo` is a ±4-second
   windowed average of the score's own tempo map, then smoothed (0.3 per beat,
-  0.7 on the first) and clamped to 0.4x–2.0x. Vertical travel between beats sets
+  0.7 on the first) and clamped to 0.4x–2.0x. The swing above the plane sets
   dynamics over a 20 dB span defined in decibels, not gain — the first version
-  spanned 8 dB and was inaudible while playing. Pointer speed at the crossing
+  spanned 8 dB and was inaudible while playing. The measurement is the highest
+  point reached above the plane since the last beat, so a bigger rebound plays
+  louder. Pointer speed at the crossing
   adds a one-beat accent. Three seconds without a beat and it eases back to
   1.0x. The master runs through a zero-latency soft clipper so the loud end
   cannot clip.
@@ -82,7 +85,8 @@ Prompts:
   conducting audibly changing the tempo and easing back; record and play back;
   a local file loading with zero network requests; twelve GM programs resolving
   to distinct named presets with measurably distinct spectra; conducted
-  dynamics measured at 21 dB of real spread at the master bus; no console errors;
+  dynamics measured at 17-21 dB of real spread at the master bus with the tempo
+  held constant; conducted tempo settling to within 2-4% wobble; no console errors;
   no horizontal scroll at 1440x900, 1280x720, 1024x640 or 820x1180.
 - **Not verified, because it needs a person:** latency as *felt*, whether the
   conducting smoothing is playable, whether the ease-back is forgiving or

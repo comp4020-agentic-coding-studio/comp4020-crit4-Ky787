@@ -28,7 +28,7 @@ reading, their rubato.
 | Pedal | Hold `shift` (either one). |
 | Octave | `←` and `→`. |
 | Play / pause | `space`, anywhere on the page. |
-| Conduct | Load a piece, press **Conduct**, then beat downward through the line. A bigger beat plays louder; a sharper one accents. Stop, and the tempo eases back to the score's own reading. |
+| Conduct | Load a piece, press **Conduct**, then drop onto the line, rebound, and drop again. The line is the ictus — only the downward arrival counts, so there is no pattern to get right. The higher you rebound, the louder the next beat; a sharper arrival accents it. Stop, and the tempo eases back to the score's own reading. |
 | Record | **Record**, play, **Stop**, **Play my take** — a take is a real MIDI file, so you can conduct it too. |
 | Your own MIDI | **Open a MIDI file**, or drop one on the page. It is read in the browser and never uploaded. |
 

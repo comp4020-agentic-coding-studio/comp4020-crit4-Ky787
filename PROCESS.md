@@ -147,6 +147,39 @@ the page. The rule is in `CLAUDE.md` so it does not drift back.
 works exercised nothing the concertos do not, and conductor mode is more
 interesting with an orchestra under the soloist than with one instrument.
 
+### 6. Making the gesture a conductor's gesture
+
+Conducting worked but did not feel like conducting. Three changes, all inside
+the existing beat-detection and tempo-following architecture rather than around
+it.
+
+The beat line moved from the middle of the surface to **70% down** and became an
+*ictus plane*: the point a beat arrives at, not a threshold to cross. That
+matches how an arm actually works — almost all the motion is rebound and
+preparation above the beat, with only a little follow-through below — and it
+gives the gesture somewhere to live.
+
+Dynamics changed from **travel through the line to the swing above it**: the
+highest point reached since the previous ictus. The old measurement quietly
+rewarded the wrong thing, since overshooting below the line counted the same as
+lifting above it, so a cramped jab could read as loud. Now a bigger rebound
+plays louder, which is a rule a hand already knows.
+
+The rhythm is made visible rather than explained: the plane carries a small
+caret at each end pointing the way the beat is taken, a faint line marks how
+high the current swing has reached so you can see the dynamic you are winding up
+to *before* it lands, and the plane pulses outward from the point of arrival.
+The only words are one line sitting directly above the plane, which fades the
+moment you start.
+
+Measured on the built page, conducting with an ordinary mouse: slow beating
+gives 1.11x and fast gives 1.98x; small against large swings at the *same*
+tempo give a 17.2 dB spread at the master bus, with no step between successive
+beats larger than 0.51 dB; and once a tempo settles it wobbles by 2-4%, which is
+less than the rubato already in the score. The score's map survives —
+109 → 136 → 125 → 132 BPM played as 153 → 190 → 175 → 185 at 1.398x, all 1,387
+tempo events intact.
+
 ## Scope decisions
 
 - **A recording is written out as a real Standard MIDI File**, not kept as an

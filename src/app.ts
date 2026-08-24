@@ -11,6 +11,7 @@ import { Recorder, buildRecordingMIDI } from "./recorder.ts";
 import {
   applyBeat,
   BatonTracker,
+  ICTUS_LINE,
   initialConductorState,
   relax,
   type ConductorState,
@@ -32,7 +33,6 @@ import {
 
 type Mode = "play" | "conduct";
 
-const BEAT_LINE = 0.62;
 const SUSTAIN_CC = 64;
 
 function need<T extends Element>(id: string): T {
@@ -74,7 +74,7 @@ export class App {
   private readonly engine = new AudioEngine();
   private readonly waterfall = new Waterfall(this.canvas);
   private readonly recorder = new Recorder(() => this.engine.context.currentTime);
-  private readonly baton = new BatonTracker(BEAT_LINE);
+  private readonly baton = new BatonTracker(ICTUS_LINE);
 
   private transport!: Transport;
   private piano!: Piano;
@@ -530,9 +530,13 @@ export class App {
       conductor:
         this.mode === "conduct"
           ? {
-              beatLine: BEAT_LINE,
+              beatLine: ICTUS_LINE,
               trail: this.baton.trail,
               flash: this.beatFlash,
+              // The swing in progress, so the surface can show the dynamic the
+              // player is winding up to before the beat lands.
+              lift: this.baton.lift,
+              ictusX: this.baton.ictusX,
             }
           : undefined,
     });

@@ -6,6 +6,16 @@
 // still reads 132 -> 126 -> 118. That is the whole point of the mode, and it is
 // why the numbers below are a multiplier and never an absolute BPM.
 
+/**
+ * Where the ictus plane sits, 0 at the top of the conducting area and 1 at the
+ * bottom. Low, at 70%, because that is how a hand actually works: almost all of
+ * a conductor's motion is the rebound and the preparation *above* the beat, and
+ * only a little follow-through below it. It was at 62% and the space above felt
+ * cramped, which also left the gesture size — now measured above the line —
+ * with too little room to mean anything.
+ */
+export const ICTUS_LINE = 0.7;
+
 export const MIN_MULTIPLIER = 0.4;
 export const MAX_MULTIPLIER = 2.0;
 
@@ -77,30 +87,34 @@ export function multiplierFor(userTempo: number, referenceTempo: number): number
 /**
  * Gesture size to loudness.
  *
- * The first version spanned 0.55x to 1.35x of gain, which sounds like a lot
- * written down and is only about 8 dB — under a full orchestra, playing it, you
- * could barely tell. Loudness is logarithmic, so the mapping is defined in dB
- * and converted, and the span is now 20 dB: roughly a real pianissimo to a real
- * forte.
+ * WHAT is measured: the highest point reached above the ictus plane since the
+ * previous beat — the size of the swing the player brings down onto this beat.
+ * It used to be total vertical travel, which quietly rewarded the wrong thing,
+ * because overshooting *below* the line counted the same as lifting above it
+ * and a cramped jab through the plane could read as loud. Rebound higher, play
+ * louder; that is the whole rule, and it is the one a hand already knows.
  *
- * It is deliberately lopsided. A beat of NEUTRAL_TRAVEL is unity, and there is
- * 16 dB below it against 4 dB above, because there is always room to take sound
- * away and very little to add before the mix runs out of headroom. The engine's
- * soft clipper catches what is left.
+ * HOW MUCH: the span is 20 dB, defined in decibels because loudness is
+ * logarithmic. An earlier version spanned 0.55x to 1.35x of gain, which reads
+ * wide and is only 8 dB — under a full orchestra it was inaudible. It is
+ * deliberately lopsided: a swing of NEUTRAL_LIFT is unity, with 16 dB below it
+ * against 4 above, because there is always room to take sound away and very
+ * little to add before the mix runs out of headroom. The engine's soft clipper
+ * catches what is left.
  */
-export const NEUTRAL_TRAVEL = 0.3;
-export const MIN_TRAVEL = 0.04;
-export const MAX_TRAVEL = 0.65;
+export const MIN_LIFT = 0.03;
+export const NEUTRAL_LIFT = 0.18;
+export const MAX_LIFT = 0.55;
 export const MIN_DYNAMIC_DB = -16;
 export const MAX_DYNAMIC_DB = 4;
 
-/** Vertical travel between beats, as a share of the surface height. */
-export function dynamicFromGesture(travelFraction: number): number {
-  const t = Math.min(MAX_TRAVEL, Math.max(MIN_TRAVEL, travelFraction));
+/** Highest point above the ictus plane since the last beat, 0..1 of height. */
+export function dynamicFromGesture(liftFraction: number): number {
+  const t = Math.min(MAX_LIFT, Math.max(MIN_LIFT, liftFraction));
   const decibels =
-    t <= NEUTRAL_TRAVEL
-      ? MIN_DYNAMIC_DB * (1 - (t - MIN_TRAVEL) / (NEUTRAL_TRAVEL - MIN_TRAVEL))
-      : MAX_DYNAMIC_DB * ((t - NEUTRAL_TRAVEL) / (MAX_TRAVEL - NEUTRAL_TRAVEL));
+    t <= NEUTRAL_LIFT
+      ? MIN_DYNAMIC_DB * (1 - (t - MIN_LIFT) / (NEUTRAL_LIFT - MIN_LIFT))
+      : MAX_DYNAMIC_DB * ((t - NEUTRAL_LIFT) / (MAX_LIFT - NEUTRAL_LIFT));
   return 10 ** (decibels / 20);
 }
 
@@ -113,8 +127,8 @@ export function accentFromSpeed(speedFraction: number): number {
 export interface ConductedBeat {
   /** Seconds since the previous beat, or undefined for the first. */
   interval?: number;
-  /** Vertical travel since the previous beat, as a share of surface height. */
-  travel: number;
+  /** Highest point above the ictus plane since the previous beat, 0..1. */
+  lift: number;
   /** Downward speed at the crossing, in surface heights per second. */
   speed: number;
 }
@@ -162,7 +176,7 @@ export function applyBeat(
   // straight away instead of creeping towards them over five beats.
   const factor = state.beats <= 1 ? 0.7 : TEMPO_SMOOTHING;
   next.multiplier = clampMultiplier(smoothToward(state.multiplier, target, factor));
-  next.dynamic = smoothToward(state.dynamic, dynamicFromGesture(beat.travel), DYNAMIC_SMOOTHING);
+  next.dynamic = smoothToward(state.dynamic, dynamicFromGesture(beat.lift), DYNAMIC_SMOOTHING);
   return next;
 }
 
@@ -196,19 +210,26 @@ export interface BatonSample {
 }
 
 /**
- * Watches a stream of pointer samples over the conducting surface and reports
- * a beat each time the baton crosses the beat line on its way down.
+ * Watches a stream of pointer samples over the conducting surface and reports a
+ * beat each time the baton arrives downward at the ictus plane.
+ *
+ * The cycle it is built around is the one a hand does anyway: the ictus, a
+ * rebound up away from the plane, a preparation that turns and comes back down,
+ * and the next ictus. Only the downward arrival counts, so the rebound is free
+ * — there is no pattern to get right and no way to beat it wrong.
  */
 export class BatonTracker {
   private previous?: BatonSample;
   private lastBeatAt?: number;
-  private minY = Infinity;
-  private maxY = -Infinity;
+  /** Highest point (smallest y) reached since the last ictus. */
+  private apexY = Infinity;
+  /** Where on the plane the last ictus landed, for the pulse that marks it. */
+  ictusX?: number;
   /** The most recent samples, for drawing the trail. */
   readonly trail: BatonSample[] = [];
 
   constructor(
-    /** Height of the beat line, 0 (top) to 1 (bottom). */
+    /** Height of the ictus plane, 0 (top) to 1 (bottom). */
     readonly beatLine: number,
     private readonly trailLength = 24,
   ) {}
@@ -216,17 +237,27 @@ export class BatonTracker {
   reset(): void {
     this.previous = undefined;
     this.lastBeatAt = undefined;
-    this.minY = Infinity;
-    this.maxY = -Infinity;
+    this.apexY = Infinity;
+    this.ictusX = undefined;
     this.trail.length = 0;
   }
 
-  /** Feed a sample; returns a beat if this sample crossed the line downward. */
+  /**
+   * How big the swing currently in progress is. Read every frame so the surface
+   * can show the player the dynamic they are winding up to *before* the beat
+   * lands, which is what makes the rebound legible as preparation rather than
+   * as a return stroke.
+   */
+  get lift(): number {
+    if (!Number.isFinite(this.apexY)) return 0;
+    return Math.max(0, this.beatLine - this.apexY);
+  }
+
+  /** Feed a sample; returns a beat if this sample arrived at the plane. */
   push(sample: BatonSample): ConductedBeat | undefined {
     this.trail.push(sample);
     if (this.trail.length > this.trailLength) this.trail.shift();
-    this.minY = Math.min(this.minY, sample.y);
-    this.maxY = Math.max(this.maxY, sample.y);
+    this.apexY = Math.min(this.apexY, sample.y);
 
     const previous = this.previous;
     this.previous = sample;
@@ -234,15 +265,17 @@ export class BatonTracker {
 
     const dt = sample.t - previous.t;
     if (dt <= 0) return undefined;
-    const crossedDown = previous.y < this.beatLine && sample.y >= this.beatLine;
-    if (!crossedDown) return undefined;
+    const arrived = previous.y < this.beatLine && sample.y >= this.beatLine;
+    if (!arrived) return undefined;
 
-    const travel = this.maxY > this.minY ? this.maxY - this.minY : 0;
+    const lift = this.lift;
     const speed = (sample.y - previous.y) / dt;
     const interval = this.lastBeatAt === undefined ? undefined : sample.t - this.lastBeatAt;
     this.lastBeatAt = sample.t;
-    this.minY = sample.y;
-    this.maxY = sample.y;
-    return { interval, travel, speed };
+    this.ictusX = sample.x;
+    // The next swing is measured from here, so the rebound that follows this
+    // beat is what sets the next beat's dynamic.
+    this.apexY = sample.y;
+    return { interval, lift, speed };
   }
 }

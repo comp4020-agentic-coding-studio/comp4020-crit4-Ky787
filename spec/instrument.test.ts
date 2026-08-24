@@ -30,8 +30,10 @@ import {
   BatonTracker,
   clampMultiplier,
   dynamicFromGesture,
+  MAX_LIFT,
   initialConductorState,
-  NEUTRAL_TRAVEL,
+  ICTUS_LINE,
+  NEUTRAL_LIFT,
   MAX_MULTIPLIER,
   MIN_MULTIPLIER,
   multiplierFor,
@@ -340,11 +342,11 @@ describe("conductor arithmetic", () => {
 
   it("converges on a steady beat instead of chasing every one", () => {
     let state = initialConductorState();
-    state = applyBeat(state, { travel: 0.3, speed: 2 }, 100, 0);
+    state = applyBeat(state, { lift: 0.3, speed: 2 }, 100, 0);
     const seen: number[] = [];
     for (let beat = 1; beat <= 10; beat++) {
       // 0.5s apart against a 100 BPM score: the player wants 120, i.e. 1.2x
-      state = applyBeat(state, { interval: 0.5, travel: 0.3, speed: 2 }, 100, beat * 0.5);
+      state = applyBeat(state, { interval: 0.5, lift: 0.3, speed: 2 }, 100, beat * 0.5);
       seen.push(state.multiplier);
     }
     expect(seen.at(-1)).toBeCloseTo(1.2, 2);
@@ -354,19 +356,19 @@ describe("conductor arithmetic", () => {
 
   it("ignores a stumble or a long pause rather than lurching", () => {
     let state = initialConductorState();
-    state = applyBeat(state, { travel: 0.3, speed: 2 }, 120, 0);
-    state = applyBeat(state, { interval: 0.5, travel: 0.3, speed: 2 }, 120, 0.5);
+    state = applyBeat(state, { lift: 0.3, speed: 2 }, 120, 0);
+    state = applyBeat(state, { interval: 0.5, lift: 0.3, speed: 2 }, 120, 0.5);
     const settled = state.multiplier;
-    state = applyBeat(state, { interval: 0.02, travel: 0.3, speed: 2 }, 120, 0.52);
+    state = applyBeat(state, { interval: 0.02, lift: 0.3, speed: 2 }, 120, 0.52);
     expect(state.multiplier).toBe(settled);
-    state = applyBeat(state, { interval: 12, travel: 0.3, speed: 2 }, 120, 12.5);
+    state = applyBeat(state, { interval: 12, lift: 0.3, speed: 2 }, 120, 12.5);
     expect(state.multiplier).toBe(settled);
   });
 
   it("returns to the score's own tempo when the player stops", () => {
     let state = initialConductorState();
-    state = applyBeat(state, { travel: 0.3, speed: 2 }, 120, 0);
-    state = applyBeat(state, { interval: 0.35, travel: 0.5, speed: 6 }, 120, 0.35);
+    state = applyBeat(state, { lift: 0.3, speed: 2 }, 120, 0);
+    state = applyBeat(state, { interval: 0.35, lift: 0.5, speed: 6 }, 120, 0.35);
     expect(state.multiplier).toBeGreaterThan(1.2);
     for (let step = 0; step < 400; step++) state = relax(state, 0.35 + step * 0.05, 0.05);
     expect(state.multiplier).toBeCloseTo(1, 2);
@@ -374,16 +376,16 @@ describe("conductor arithmetic", () => {
     expect(state.accent).toBeCloseTo(0, 3);
   });
 
-  it("plays louder for a bigger beat", () => {
+  it("plays louder for a bigger swing above the plane", () => {
     const small = applyBeat(
       initialConductorState(),
-      { interval: 0.5, travel: 0.05, speed: 1 },
+      { interval: 0.5, lift: 0.05, speed: 1 },
       120,
       1,
     );
     const large = applyBeat(
       initialConductorState(),
-      { interval: 0.5, travel: 0.45, speed: 1 },
+      { interval: 0.5, lift: 0.45, speed: 1 },
       120,
       1,
     );
@@ -396,7 +398,7 @@ describe("conductor arithmetic", () => {
     // the test is in dB, not in gain.
     const dB = (gain: number) => 20 * Math.log10(gain);
     const quietest = dynamicFromGesture(0);
-    const loudest = dynamicFromGesture(1);
+    const loudest = dynamicFromGesture(ICTUS_LINE);
     expect(dB(loudest) - dB(quietest)).toBeGreaterThanOrEqual(18);
     // Headroom is asymmetric on purpose: there is always room to take sound
     // away, and very little to add before the mix runs out.
@@ -404,8 +406,16 @@ describe("conductor arithmetic", () => {
     expect(dB(quietest)).toBeLessThanOrEqual(-14);
   });
 
-  it("leaves a normal beat at the volume the score asked for", () => {
-    expect(dynamicFromGesture(NEUTRAL_TRAVEL)).toBeCloseTo(1, 6);
+  it("leaves a normal swing at the volume the score asked for", () => {
+    expect(dynamicFromGesture(NEUTRAL_LIFT)).toBeCloseTo(1, 6);
+  });
+
+  it("keeps the whole dynamic range reachable in the space above the plane", () => {
+    // The swing is measured above the ictus, so the loudest gesture has to fit
+    // between the top of the surface and the line — otherwise the top of the
+    // range is off-screen and unreachable with a mouse.
+    expect(MAX_LIFT).toBeLessThan(ICTUS_LINE);
+    expect(dynamicFromGesture(ICTUS_LINE)).toBe(dynamicFromGesture(MAX_LIFT));
   });
 
   it("is monotone in gesture size, and clamps outside the usable travel", () => {
@@ -417,21 +427,61 @@ describe("conductor arithmetic", () => {
       previous = gain;
     }
     expect(dynamicFromGesture(-5)).toBe(dynamicFromGesture(0));
-    expect(dynamicFromGesture(99)).toBe(dynamicFromGesture(1));
+    expect(dynamicFromGesture(99)).toBe(dynamicFromGesture(MAX_LIFT));
   });
 
-  it("counts a beat only on the way down through the line", () => {
-    const baton = new BatonTracker(0.5);
-    expect(baton.push({ x: 0.5, y: 0.2, t: 0 })).toBeUndefined();
-    expect(baton.push({ x: 0.5, y: 0.4, t: 0.1 })).toBeUndefined();
-    const down = baton.push({ x: 0.5, y: 0.7, t: 0.2 });
-    expect(down).toBeDefined();
-    expect(down?.interval).toBeUndefined(); // first beat has nothing to compare to
-    expect(baton.push({ x: 0.5, y: 0.4, t: 0.3 })).toBeUndefined(); // upstroke is silent
-    expect(baton.push({ x: 0.5, y: 0.2, t: 0.4 })).toBeUndefined();
-    const second = baton.push({ x: 0.5, y: 0.8, t: 0.7 });
+  it("reads a beat only on the downward arrival at the ictus plane", () => {
+    const baton = new BatonTracker(0.7);
+    expect(baton.push({ x: 0.5, y: 0.3, t: 0 })).toBeUndefined();
+    expect(baton.push({ x: 0.5, y: 0.5, t: 0.1 })).toBeUndefined();
+    const first = baton.push({ x: 0.5, y: 0.72, t: 0.2 });
+    expect(first).toBeDefined();
+    expect(first?.interval).toBeUndefined(); // nothing to compare the first to
+    // The rebound is free: going back up is never a beat, whatever shape it is.
+    expect(baton.push({ x: 0.4, y: 0.5, t: 0.3 })).toBeUndefined();
+    expect(baton.push({ x: 0.3, y: 0.35, t: 0.4 })).toBeUndefined();
+    expect(baton.push({ x: 0.45, y: 0.55, t: 0.6 })).toBeUndefined();
+    const second = baton.push({ x: 0.5, y: 0.75, t: 0.7 });
     expect(second?.interval).toBeCloseTo(0.5, 6);
-    expect(second?.travel).toBeGreaterThan(0.5);
+  });
+
+  it("measures the swing above the plane, not the follow-through below it", () => {
+    // Two beats at the same tempo: one prepared from high up, one jabbed at the
+    // line but driven deep past it. The high preparation must be the loud one.
+    const swing = (apex: number, depth: number) => {
+      const baton = new BatonTracker(0.7);
+      baton.push({ x: 0.5, y: 0.69, t: 0 });
+      baton.push({ x: 0.5, y: 0.71, t: 0.05 }); // first arrival, starts the clock
+      baton.push({ x: 0.5, y: apex, t: 0.3 }); // rebound and preparation
+      return baton.push({ x: 0.5, y: 0.7 + depth, t: 0.55 })?.lift ?? 0;
+    };
+    const prepared = swing(0.25, 0.02); // high rebound, lands lightly
+    const jabbed = swing(0.66, 0.29); // barely lifts, drives well below
+    expect(prepared).toBeCloseTo(0.45, 6);
+    expect(jabbed).toBeCloseTo(0.04, 6);
+    expect(dynamicFromGesture(prepared)).toBeGreaterThan(dynamicFromGesture(jabbed));
+  });
+
+  it("starts each swing's measurement at the beat it follows", () => {
+    const baton = new BatonTracker(0.7);
+    baton.push({ x: 0.5, y: 0.2, t: 0 }); // a big lift before the very first beat
+    baton.push({ x: 0.5, y: 0.75, t: 0.3 });
+    // A small rebound after it must read small, not inherit the earlier height.
+    baton.push({ x: 0.5, y: 0.62, t: 0.6 });
+    const beat = baton.push({ x: 0.5, y: 0.72, t: 0.8 });
+    expect(beat?.lift).toBeCloseTo(0.08, 6);
+  });
+
+  it("reports the swing in progress so the surface can show it", () => {
+    const baton = new BatonTracker(0.7);
+    expect(baton.lift).toBe(0);
+    baton.push({ x: 0.5, y: 0.71, t: 0 });
+    baton.push({ x: 0.5, y: 0.45, t: 0.2 });
+    expect(baton.lift).toBeCloseTo(0.25, 6);
+    baton.push({ x: 0.5, y: 0.55, t: 0.3 }); // coming back down holds the apex
+    expect(baton.lift).toBeCloseTo(0.25, 6);
+    baton.reset();
+    expect(baton.lift).toBe(0);
   });
 });
 
