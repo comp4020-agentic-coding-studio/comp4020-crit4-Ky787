@@ -15,6 +15,7 @@ export interface Setting {
 
 export class Panel {
   private readonly inputs = new Map<string, HTMLInputElement>();
+  private readonly outputs = new Map<string, HTMLOutputElement>();
   private readonly defaults = new Map<string, number>();
 
   constructor(
@@ -54,18 +55,22 @@ export class Panel {
     });
 
     this.inputs.set(setting.id, input);
+    this.outputs.set(setting.id, output);
     field.append(label, output, input);
     return field;
   }
 
-  /** Move a control from elsewhere (the conductor moves tempo) without
-   *  re-firing its apply, which would fight whatever set it. */
+  /**
+   * Move a control from elsewhere (the conductor moves tempo) without re-firing
+   * its apply, which would fight whatever set it. Called every frame while
+   * conducting, so it does no DOM work when nothing has moved.
+   */
   reflect(id: string, value: number): void {
     const input = this.inputs.get(id);
     if (!input || document.activeElement === input) return;
     if (Math.abs(Number(input.value) - value) < Number(input.step) / 2) return;
     input.value = String(value);
-    const output = this.grid.querySelector<HTMLOutputElement>(`output[for="set-${id}"]`);
+    const output = this.outputs.get(id);
     const setting = this.settings.find((candidate) => candidate.id === id);
     if (output && setting) output.textContent = setting.format(value);
   }

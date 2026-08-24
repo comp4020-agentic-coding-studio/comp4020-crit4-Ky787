@@ -41,6 +41,12 @@ function need<T extends Element>(id: string): T {
   return element as unknown as T;
 }
 
+/** The readouts update 60 times a second and change perhaps twice; writing
+ *  textContent regardless is layout work for nothing. */
+function setText(element: Element, value: string): void {
+  if (element.textContent !== value) element.textContent = value;
+}
+
 export class App {
   private readonly root = need<HTMLElement>("app");
   private readonly stage = need<HTMLElement>("stage");
@@ -90,6 +96,7 @@ export class App {
   /** This frame's score time, so nothing reads the smoothed clock twice. */
   private frameTime = 0;
   private lastRatePush = 0;
+  private playButtonShows?: boolean;
 
   /** For the browser checks and the console: see main.ts. */
   get audio(): AudioEngine {
@@ -309,6 +316,8 @@ export class App {
 
   private refreshPlayButton(): void {
     const playing = this.transport?.playing ?? false;
+    if (playing === this.playButtonShows) return;
+    this.playButtonShows = playing;
     this.playButton.classList.toggle("is-playing", playing);
     this.playButton.setAttribute("aria-label", playing ? "Pause" : "Play");
     const glyph = this.playButton.querySelector(".round__glyph");
@@ -526,25 +535,33 @@ export class App {
 
   private updateReadouts(time: number): void {
     if (!this.transport?.loaded) {
-      this.tempoLine.textContent = "";
+      setText(this.tempoLine, "");
       return;
     }
     const duration = this.transport.duration;
-    this.timeLine.textContent = `${formatTime(time)} / ${formatTime(duration)}`;
-    if (!this.scrubbing && duration > 0)
-      this.scrub.value = String(Math.round((time / duration) * 1000));
+    setText(this.timeLine, `${formatTime(time)} / ${formatTime(duration)}`);
+    if (!this.scrubbing && duration > 0) {
+      const position = String(Math.round((time / duration) * 1000));
+      if (this.scrub.value !== position) this.scrub.value = position;
+    }
 
     const local = this.transport.localTempoAt(time);
     const rate = this.transport.rate;
     const conducted = Math.abs(rate - 1) > 0.02;
     this.tempoLine.classList.toggle("is-conducted", conducted);
-    this.tempoLine.textContent = conducted
-      ? `${Math.round(local)} → ${Math.round(local * rate)} BPM`
-      : `${Math.round(local)} BPM`;
+    setText(
+      this.tempoLine,
+      conducted
+        ? `${Math.round(local)} → ${Math.round(local * rate)} BPM`
+        : `${Math.round(local)} BPM`,
+    );
 
     if (this.mode === "conduct") {
-      this.conductMultiplier.textContent = `${rate.toFixed(2)}×`;
-      this.conductTempo.textContent = `${Math.round(local)} BPM here, played at ${Math.round(local * rate)}`;
+      setText(this.conductMultiplier, `${rate.toFixed(2)}×`);
+      setText(
+        this.conductTempo,
+        `${Math.round(local)} BPM here, played at ${Math.round(local * rate)}`,
+      );
     }
     this.refreshPlayButton();
   }
