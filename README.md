@@ -1,68 +1,81 @@
-# COMP4020 static prototype template
+# Rubato
 
-A starter template for static-site prototypes in **COMP4020 / COMP8020 Agentic
-Coding Studio**. The course provisions a repo from this template for each
-deliverable --- you don't create it yourself. The `start` course skill clones it
-for you; from there, build your prototype and deploy it to GitHub Pages.
+An 88-key piano in the browser, and an orchestra you can conduct.
 
-## CI and Pages only turn on when you ship
+COMP4020 / COMP8020 Agentic Coding Studio, Crit 4 —
+[*An Instrument*](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/crits/04-instrument/).
 
-Your repo starts private, and both CI jobs (`check` and `deploy`) are gated on
-it being public. While private, a push to `main` runs nothing in CI ---
-`pnpm check` (below) is your feedback loop until then. When you're ready, the
-course's `/ship` skill flips the repo public, turns on GitHub Pages, and
-dispatches the deploy for you; there's nothing to configure in the Pages
-settings yourself. From that point, every push to `main` builds and deploys, and
-the deploy step prints your live URL and checks it returns 200.
+Click a key, tap it, or type — the piano is playable the moment the page
+settles, with no instructions and no wrong notes. Load one of five performances
+and the notes fall onto the keys they belong to. Switch to **Conduct** and beat
+downward through the line on the stage: the music follows your hand.
 
-## What gets marked
+## The idea
 
-The deployed site is the deliverable, assessed live in Chrome at two fixed
-viewports --- see the course website's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#marking-environment)
-for the details.
+The conductor **multiplies the performance's own tempo map** rather than
+replacing it. The supplied MIDI files carry tempo maps synchronised to real
+performances — 1,352 to 2,610 tempo events each. Flattening them to a slider
+would throw away the thing that makes them worth listening to. Conducting 20%
+faster turns a local 110 → 105 → 98 → 92 into 132 → 126 → 118 → 110: your
+reading, their rubato.
 
-## Quick start
+## Playing it
 
-```sh
-mise install       # supported path: install the template's Node and pnpm
-pnpm install
-pnpm dev             # local dev server
-pnpm check           # most of what CI runs (links, secrets and deploy are CI-only)
-pnpm check:evidence  # the process-evidence check CI runs before you ship
-pnpm build           # produce dist/ (what gets deployed)
+| | |
+|---|---|
+| Mouse / touch | Click or tap the keys. Strike lower on a key for a louder note; drag across for a glissando. |
+| Typing | `Z` `X` `C` `V`… and `Q` `W` `E` `R`… are two octaves, blacks on `S` `D` `G` and `2` `3` `5`. |
+| Pedal | Hold `space`. |
+| Octave | `←` and `→`. |
+| Conduct | Load a piece, press **Conduct**, then beat downward through the line. A bigger beat plays louder; a sharper one accents. Stop, and the tempo eases back to the score's own reading. |
+| Record | **Record**, play, **Stop**, **Play my take** — a take is a real MIDI file, so you can conduct it too. |
+| Your own MIDI | **Open a MIDI file**, or drop one on the page. It is read in the browser and never uploaded. |
 
-# reproduce CI's links check before you push
-pnpm dlx linkinator ./dist --silent --skip "^https?://(?!localhost|127)"
+## How it is put together
+
+```
+src/audio/engine.ts    AudioContext, SoundFont synth, master chain
+src/transport.ts       one sequencer, one score, the clock everything reads
+src/midi/              repertoire, note extraction, orchestral families, local tempo
+src/piano/             88-key geometry, typing map, pointer/touch/keyboard input
+src/visualizer.ts      canvas waterfall, painted for the visible window only
+src/conductor.ts       beat maths (pure) and the baton tracker
+src/recorder.ts        a live take, written out as a Standard MIDI File
+src/app.ts             wiring, modes, controls
 ```
 
-`mise` is the course's recommended runtime manager. If you use another manager
-or the official installers, that is fine: provide the Node and pnpm versions in
-`mise.toml`, then run the same commands. Tutor support reproduces runtime
-problems with mise.
+Two things hold the design together. Synthesis runs in an **AudioWorklet**, off
+the main thread, so a 45,000-note concerto and a live keyboard share a page
+without the keyboard stuttering. And the transport's clock is measured in
+**score seconds**, as are the note positions the waterfall draws — so at any
+conducted tempo the picture cannot drift from the audio, because there is only
+one clock.
 
-## What's here
+## Credits
 
-- `index.html`, `styles.css`, `main.ts` --- a minimal starting site. Replace it.
-- `mise.toml` --- the tested Node and pnpm versions for this template.
-- `spec/` --- what the checks are for (`README.md`), the shipped invariants
-  (`invariants.test.ts`), and a replaceable starter test (`starter.test.ts`);
-  the spec tests you write live alongside them.
-- `CLAUDE.md` --- orients whoever works in this repo, you or a coding agent:
-  what the checks mean and how to work here. Yours to grow.
-- `PROCESS.md` --- a template for your process overview, showing the
-  cited-moment format. Replace it with your own; `pnpm check:evidence` verifies
-  your citations resolve.
-- `.github/workflows/checks.yml` --- the CI sensors that run on every push once
-  your repo is public, and the GitHub Pages deploy.
-- `.githooks/pre-commit` --- blocks any commit that contains something shaped
-  like an API key, so your COMP4020 key can't end up in a public repo. Installed
-  automatically by `pnpm install`.
+- **[spessasynth_lib](https://github.com/spessasus/spessasynth_lib)** — SF2/SF3
+  synthesis and MIDI sequencing for the Web Audio API. Apache-2.0.
+- **[GeneralUser GS](https://www.schristiancollins.com/generaluser.php)** by
+  S. Christian Collins — the General MIDI sound bank, shipped as the 8.4 MB
+  compressed SF3 build. GeneralUser GS License v2.0, which permits
+  redistribution; the licence text ships beside the file at
+  `public/soundfont/LICENSE-GeneralUser-GS.txt`.
+- The five MIDI performances were supplied with this deliverable;
+  `public/midi/PROVENANCE.txt` and `validation.json` record what was corrected
+  in them and that their tempo maps survived.
 
-This template is SSG-agnostic: plain HTML/CSS/TypeScript on Vite, so you can add
-Astro, Eleventy, or any static generator later without changing how it deploys.
-The course plugin's `stack` skill performs the swap for you — to the course
-default (Astro) or bare HTML/CSS — with the Pages base path, lockfile, and CI
-link check handled.
+## Working on it
 
-See the course site for how the checks map to each week of the course.
+```sh
+mise install
+pnpm install
+pnpm dev             # local dev server
+pnpm check           # typecheck, build, spec tests
+pnpm check:evidence  # the process-evidence check CI runs
+pnpm build           # produce dist/, which is what deploys
+```
+
+`PROCESS.md` is the reading guide to how this came together; `CLAUDE.md` carries
+the rules the build had to learn, including the two that cost the most time.
+`spec/` holds the invariants that ship with the course template plus
+`instrument.test.ts`, this deliverable's own contracts.
