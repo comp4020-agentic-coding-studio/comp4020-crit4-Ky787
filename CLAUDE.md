@@ -100,6 +100,42 @@ For large MIDI files, render only the visible note window rather than creating D
 * Resume Web Audio only after an appropriate user gesture.
 * Keep client-side MIDI uploads local to the browser.
 
+## Rules learned while building this
+
+These are corrections that already cost time once. They are here so they do not
+cost it again.
+
+**A control the player's hand drives must be monotone in its input, and a test
+must say so across the whole range.** Conductor mode first tried to be clever:
+it snapped the beat rate onto the nearest power-of-two subdivision before
+dividing by the score's tempo. Beating 1.4x the music was read as half-time and
+played it at 0.7x. Every threshold that fixed that case moved the reversal to
+another speed a hand can reach. Assert monotonicity over a swept range, not at
+three sample points, and delete the cleverness rather than tune it.
+
+**Never derive anything from `sequencer.currentTempo` on these files.** The
+supplied performances carry 1,300–2,600 tempo events whose instantaneous values
+run from 5 to 480 BPM. Anything that divides by a local tempo must use a
+windowed average (`referenceTempo` in `src/midi/analysis.ts`), computed from the
+tempo map's own tick-to-second mapping.
+
+**Read the score clock once per frame.** `Sequencer.currentHighResolutionTime`
+advances its own smoothing filter as a side effect of being read.
+
+**Claims about sound need a measurement, not a reading of the code.** "Different
+General MIDI programs sound different" was verified by tapping the master bus
+with an `AnalyserNode` in a real browser and comparing spectra and spectral
+centroids per program. Reading the SoundFont loading path proves nothing.
+
+**Check `[hidden]` actually hides.** Anything styled with `display` overrides
+it; this repo carries a global `[hidden] { display: none !important }` because
+of it.
+
+**Drive the built page in a browser before believing any layout is done.** Two
+of the worst defects so far — an overlay covering the stage from first paint,
+and the right-hand controls off-screen — were invisible in the source and
+obvious in a screenshot. Check 1440x900, 1280x720 and 1024x640 at minimum.
+
 ## Process
 
 Work incrementally and make meaningful commits at working milestones.
