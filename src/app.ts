@@ -82,7 +82,7 @@ export class App {
   private piano!: Piano;
   private panel!: Panel;
 
-  private mode: Mode = "play";
+  private mode: Mode = "conduct";
   private conductorState: ConductorState = initialConductorState();
   private conducting = false;
   private beatFlash = 0;
