@@ -497,19 +497,41 @@ export class App {
       this.beatFlash = 1;
     };
 
+    const startConducting = (): void => {
+      this.conducting = true;
+      this.root.dataset.conducting = "true";
+      this.baton.reset();
+    };
+
     this.stage.addEventListener("pointerdown", (event) => {
       if (this.mode !== "conduct") return;
       event.preventDefault();
       void this.wake();
-      this.conducting = true;
-      this.root.dataset.conducting = "true";
+      // Touch and pen have no hover, so they still conduct as a drag: capture
+      // the pointer here and follow it via pointermove until release. A mouse
+      // needs none of this — it is picked up below on plain hover, with no
+      // button required — so leave its baton alone if this is the down event
+      // of an ordinary click.
+      if (event.pointerType === "mouse") return;
+      startConducting();
       this.stage.setPointerCapture(event.pointerId);
-      this.baton.reset();
       sample(event);
     });
 
     this.stage.addEventListener("pointermove", (event) => {
-      if (!this.conducting) return;
+      if (this.mode !== "conduct") return;
+      if (event.pointerType === "mouse") {
+        // Ordinary mouse conducting: no button, no capture, just hover. This
+        // used to require pointerdown -> setPointerCapture -> pointermove ->
+        // pointerup/cancel, which made a plain mouse pass over the stage
+        // conduct nothing unless the button was held the whole time — on a
+        // desktop mouse in Chromium that produced apex rebounds (upward)
+        // without matching downward beats, because the drag that would have
+        // reset the baton and fed it samples never started.
+        if (!this.conducting) startConducting();
+      } else if (!this.conducting) {
+        return;
+      }
       // Coalesced events give the baton its real path on a high-rate pointer,
       // so a fast downbeat is not reduced to one straight line.
       const points = event.getCoalescedEvents?.() ?? [];
@@ -524,6 +546,12 @@ export class App {
     };
     this.stage.addEventListener("pointerup", stop);
     this.stage.addEventListener("pointercancel", stop);
+    // A mouse never fires pointerup here (no button was held), so the gesture
+    // has to end when the pointer leaves the stage instead, or it would keep
+    // reading beats from wherever the cursor now is.
+    this.stage.addEventListener("pointerleave", (event) => {
+      if (event.pointerType === "mouse") this.endConducting();
+    });
   }
 
   private endConducting(): void {
