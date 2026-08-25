@@ -34,6 +34,7 @@ import {
 type Mode = "play" | "conduct";
 
 const SUSTAIN_CC = 64;
+const CONDUCT_DEMO_SEEN_KEY = "rubato-conduct-demo-seen";
 
 function need<T extends Element>(id: string): T {
   const element = document.getElementById(id);
@@ -68,6 +69,7 @@ export class App {
   private readonly conductTempo = need<HTMLElement>("conduct-tempo");
   private readonly legend = need<HTMLElement>("legend");
   private readonly dropHint = need<HTMLElement>("drop-hint");
+  private readonly conductDemo = need<HTMLElement>("conduct-demo");
   private readonly panelElement = need<HTMLElement>("panel");
   private readonly panelToggle = need<HTMLButtonElement>("panel-toggle");
 
@@ -415,6 +417,11 @@ export class App {
     this.modePlay.addEventListener("click", () => this.setMode("play"));
     this.modeConduct.addEventListener("click", () => this.setMode("conduct"));
 
+    this.conductDemo.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      this.conductDemo.setAttribute("hidden", "");
+    });
+
     this.panelToggle.addEventListener("click", () => {
       const open = this.panelElement.hasAttribute("hidden");
       this.panelElement.toggleAttribute("hidden", !open);
@@ -439,6 +446,7 @@ export class App {
       // touching the same performance, not a different performance.
       if (!this.transport.playing) this.transport.play();
       this.refreshPlayButton();
+      this.maybeShowConductDemo();
     } else if (this.transport?.loaded) {
       this.endConducting();
       // Leave the music where the hand left it, and hand the slider the same
@@ -447,6 +455,23 @@ export class App {
       this.panel?.reflect("tempo", this.manualRate);
       this.engine.setDynamic(this.dynamicsSetting);
       this.setStatus("");
+    }
+  }
+
+  private maybeShowConductDemo(): void {
+    let seen = false;
+    try {
+      seen = localStorage.getItem(CONDUCT_DEMO_SEEN_KEY) === "true";
+    } catch {
+      // Storage can be unavailable (private browsing, disabled cookies); just
+      // show the demo every time in that case rather than fail to conduct.
+    }
+    if (seen) return;
+    this.conductDemo.removeAttribute("hidden");
+    try {
+      localStorage.setItem(CONDUCT_DEMO_SEEN_KEY, "true");
+    } catch {
+      // Nothing to persist; the demo will simply show again next time.
     }
   }
 

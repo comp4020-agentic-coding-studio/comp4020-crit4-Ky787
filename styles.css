@@ -873,7 +873,88 @@ kbd {
 /* --- mode differences --------------------------------------------------- */
 
 .app[data-mode="conduct"] .stage {
-  cursor: crosshair;
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><line x1='6' y1='28' x2='27' y2='5' stroke='%23ffcf7a' stroke-width='2.5' stroke-linecap='round'/><circle cx='6' cy='28' r='3' fill='%23f6d9a4'/></svg>")
+      6 28,
+    crosshair;
+}
+
+/* --- conduct demo ------------------------------------------------------- */
+
+.conduct-demo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 13, 20, 0.86);
+  z-index: 30;
+  cursor: pointer;
+  transition: opacity 0.4s ease;
+}
+
+.conduct-demo__card {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.4rem 1.8rem;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.conduct-demo__title {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.conduct-demo__stage {
+  position: relative;
+  width: 10rem;
+  height: 10rem;
+}
+
+.conduct-demo__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 70%;
+  border-top: 2px dashed rgba(255, 207, 122, 0.4);
+}
+
+.conduct-demo__baton {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin: -0.3rem 0 0 -0.3rem;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  box-shadow: 0 0 12px rgba(255, 207, 122, 0.7);
+  animation: conduct-demo-swing 1.8s ease-in-out infinite;
+}
+
+@keyframes conduct-demo-swing {
+  0% {
+    top: 0%;
+  }
+  45% {
+    top: 70%;
+  }
+  55% {
+    top: 70%;
+  }
+  100% {
+    top: 0%;
+  }
+}
+
+.conduct-demo__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
 }
 
 /* --- narrow screens ----------------------------------------------------- */
